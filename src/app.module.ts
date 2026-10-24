@@ -7,6 +7,8 @@ import { ArcjetModule } from './lib/arcjet/arcjet.module.js';
 import { ArcjetGuard } from './common/guards/arcjet.guard.js';
 import { PrismaModule } from './lib/database/prisma.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { UserModule } from './user/user.module.js';
+import { HackathonModule } from './hackathon/hackathon.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule({
   // The Arcjet client is a frozen object; Observe's proxy breaks its
@@ -33,6 +35,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule({
     ArcjetModule,
     PrismaModule,
     AuthModule,
+    UserModule,
+    HackathonModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ArcjetGuard }],
