@@ -23,6 +23,7 @@ model User {
   verifications Verification[]
   emailVerified Boolean        @default(false)
   image         String?
+  teamMembers   TeamMember[]
 
   @@map("user")
 }
@@ -80,4 +81,49 @@ model Verification {
   @@unique([identifier, value])
   @@index([identifier])
   @@map("verification")
+}
+
+model Hackathon {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  location    String?
+  maxTeams    Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  teams       Team[]
+
+  @@map("hackathon")
+}
+
+model Team {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  hackathonId String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  hackathon   Hackathon  @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  members     TeamMember[]
+
+  @@unique([hackathonId, name])
+  @@index([hackathonId])
+  @@map("team")
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  userId    String
+  role      String   @default("member")
+  joinedAt  DateTime @default(now())
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+  @@map("team_member")
 }
