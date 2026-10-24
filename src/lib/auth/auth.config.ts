@@ -4,6 +4,7 @@ import { PrismaService } from '../database/prisma.service.js';
 
 export const createBetterAuth = (prisma: PrismaService) => {
   return betterAuth({
+    baseURL: process.env.APP_BASE_URL || 'http://localhost:3000',
     database: prismaAdapter(prisma, {
       provider: 'postgresql',
     }),
