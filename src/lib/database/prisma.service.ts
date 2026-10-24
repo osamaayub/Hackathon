@@ -2,39 +2,32 @@ import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '../../../generated/prisma/client.js';
 import { PrismaPg } from '@prisma/adapter-pg';
 
-function parseDatabaseUrl(url: string) {
-  const match = url.match(
-    /^(?:postgresql|postgres):\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/([^?]+)/i,
-  );
-  if (!match) {
-    throw new Error('Invalid DATABASE_URL format');
-  }
-  const [, user, password, host, port] = match;
-  return { user, password, host, port: Number(port) };
-}
-
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService implements OnModuleInit, OnModuleDestroy {
+  private prisma: PrismaClient;
+
   constructor() {
-    const { user, password, host, port } = parseDatabaseUrl(
-      process.env.DATABASE_URL ?? '',
-    );
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL is not set');
+    }
+
     const adapter = new PrismaPg({
-      host,
-      port,
-      user,
-      password,
-      database: 'postgres',
-      ssl: { rejectUnauthorized: false },
+      connectionString: databaseUrl,
     });
-    super({ adapter });
+
+    this.prisma = new PrismaClient({ adapter });
   }
 
   async onModuleInit() {
-    await (this as any).$connect();
+    await this.prisma.$connect();
   }
 
   async onModuleDestroy() {
-    await (this as any).$disconnect();
+    await this.prisma.$disconnect();
+  }
+
+  get client(): PrismaClient {
+    return this.prisma;
   }
 }

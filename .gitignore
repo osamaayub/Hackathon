@@ -59,3 +59,10 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 /generated/prisma
+
+# AI coding assistant local config/skills (not part of the app)
+.claude/
+.agents/
+.windsurf/
+.qodo/
+skills-lock.json

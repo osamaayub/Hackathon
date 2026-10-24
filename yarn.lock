@@ -197,7 +197,7 @@
   resolved "https://registry.npmjs.org/@better-auth/mongo-adapter/-/mongo-adapter-1.7.12.tgz"
   integrity sha512-HKV4sgYSw/Gdt9AuHlESMkiKL72SWdGweDy1Wsyxoh06BpG7aNu4aSJ7marNpMdKZteyRbxWWqQkA9ediA8qFw==
 
-"@better-auth/prisma-adapter@1.7.12":
+"@better-auth/prisma-adapter@^1.7.12", "@better-auth/prisma-adapter@1.7.12":
   version "1.7.12"
   resolved "https://registry.npmjs.org/@better-auth/prisma-adapter/-/prisma-adapter-1.7.12.tgz"
   integrity sha512-FZRX6ORbwhDmeYE1Tl0IPtUn8v3BlVFgbJxDnm/DCNHxuFRf+0t4HfddUgYeYehHFR8aSDsdYX44fEFWM9877w==

@@ -1,122 +1,175 @@
-# Hackathon
+# Hackathon Backend
 
-Project created using nestjs & prisma & postgressql database
+A NestJS 11 REST API for managing hackathons, teams, and participants — built on the Express adapter, Prisma ORM 7 (PostgreSQL), and Better Auth for authentication. Arcjet provides bot/rate-limit protection at the request level, and NestJS Observe provides tracing, metrics, and logging.
 
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+## Tech stack
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+| Concern              | Technology                                   |
+| -------------------- | --------------------------------------------- |
+| Framework            | NestJS 11 (Express platform)                  |
+| Language             | TypeScript (ESM, `type: module`)              |
+| Database             | PostgreSQL via Prisma ORM 7 (`@prisma/adapter-pg`) |
+| Authentication       | Better Auth (`better-auth` + Prisma adapter)  |
+| Security / rate limit| Arcjet (`@arcjet/nest`)                       |
+| Observability        | `@nestjs/observe`                             |
+| Validation           | `class-validator` / `class-transformer`       |
+| Testing              | Vitest                                        |
+| Linting / formatting | oxlint, Prettier                              |
+| Package manager      | Yarn (lockfile committed; npm lockfile also present) |
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Project structure
 
-## Description
+```
+src/
+├── app.module.ts              # Root module — wires Observe, Arcjet, Prisma, Auth, User, Hackathon
+├── main.ts                    # Bootstrap: loads .env, global ValidationPipe, starts HTTP server
+├── app.controller.ts / app.service.ts
+├── common/
+│   ├── guards/
+│   │   ├── arcjet.guard.ts    # Global guard — blocks requests Arcjet denies (bots, rate limits)
+│   │   └── auth.guard.ts      # Route guard — requires a valid Better Auth session
+│   └── interceptors/
+│       └── logging.interceptor.ts
+├── lib/                        # Infrastructure modules (each @Global(), imported once in AppModule)
+│   ├── database/
+│   │   ├── prisma.module.ts
+│   │   └── prisma.service.ts  # Injectable PrismaClient wrapper — never instantiate PrismaClient directly
+│   ├── auth/
+│   │   ├── auth.module.ts
+│   │   ├── auth.config.ts     # Better Auth configuration
+│   │   └── auth.service.ts    # Exposes the Better Auth instance via DI
+│   └── arcjet/
+│       ├── arcjet.module.ts
+│       └── arcjet.service.ts
+├── auth/                       # Feature module — auth HTTP surface
+│   ├── auth.module.ts
+│   ├── auth.controller.ts     # POST /auth/sign-up, /auth/sign-in, /auth/sign-out, /auth/session
+│   └── dto/
+│       ├── sign-up.dto.ts
+│       └── sign-in.dto.ts
+├── user/
+│   └── user.module.ts
+└── hackathon/
+    └── hackathon.module.ts
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ yarn install
+prisma/
+└── schema.prisma               # User, Session, Account, Verification, Hackathon, Team, TeamMember
 ```
 
-## Compile and run the project
+New infrastructure integrations follow the same pattern: `src/lib/<name>/<name>.module.ts` + `<name>.service.ts`, marked `@Global()` and imported once in `AppModule`. Feature modules live under `src/<name>/`. Shared guards, interceptors, and decorators live under `src/common/`.
+
+## Data model
+
+Defined in `prisma/schema.prisma`, generated into `generated/prisma`:
+
+- **User** — account record (email, name, image, verification state)
+- **Session** — Better Auth session tokens tied to a user
+- **Account** — linked auth provider credentials (supports password + OAuth-style fields)
+- **Verification** — email verification tokens
+- **Hackathon** — an event (title, description, dates, location, max teams)
+- **Team** — belongs to a `Hackathon`, unique per `(hackathonId, name)`
+- **TeamMember** — join table between `Team` and `User`, carries a `role`
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 20+
+- Yarn
+- A PostgreSQL database (the project is wired for [Prisma Postgres](https://www.prisma.io/postgres) but any Postgres connection string works)
+
+### 1. Install dependencies
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+yarn install
 ```
 
-## Run tests
+### 2. Configure environment variables
+
+Create a `.env` file in the project root (never commit this file — it's already git-ignored):
 
 ```bash
-# unit tests
-$ yarn run test
+# Database
+DATABASE_URL=postgres://<user>:<password>@<host>:5432/<db>?sslmode=require
+DIRECT_URL=postgres://<user>:<password>@<host>:5432/<db>?sslmode=require
 
-# e2e tests
-$ yarn run test:e2e
+# Better Auth
+BETTER_AUTH_API_KEY=<your-better-auth-key>
 
-# test coverage
-$ yarn run test:cov
+# Arcjet (bot detection / rate limiting)
+ARCJET_ENV=development
+ARCJET_KEY=<your-arcjet-key>
+ARCJET_MODE=LIVE
+
+# NestJS Observe (optional — tracing/metrics/logging)
+OBSERVE_APP_KEY=<your-observe-app-key>
+OBSERVE_APP_SECRET=<your-observe-app-secret>
+
+# Server
+PORT=3000
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 3. Set up the database
 
 ```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+yarn prisma:generate       # generate the Prisma client into generated/prisma
+yarn prisma:migrate:dev    # create/apply migrations against DATABASE_URL
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 4. Run the app
 
-## Observability
+```bash
+yarn start:dev     # watch mode
+yarn start         # single run
+yarn start:prod    # run compiled dist/main.js (after `yarn build`)
+```
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+The API listens on `http://localhost:3000` by default (or `PORT` from `.env`).
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+## API
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
+| Method | Route            | Description                              |
+| ------ | ---------------- | ----------------------------------------- |
+| POST   | `/auth/sign-up`   | Create an account (email, password, name) |
+| POST   | `/auth/sign-in`   | Sign in with email + password             |
+| POST   | `/auth/sign-out`  | Invalidate the current session            |
+| POST   | `/auth/session`   | Fetch the current session, if any         |
 
-This project is already instrumented. Create a free account at [observe.nestjs.com](https://observe.nestjs.com), add an application, and paste the generated app key and secret into the `ObserveModule.forRoot()` call in `src/app.module.ts`.
+Every request passes through the global `ArcjetGuard` first, which blocks bots and rate-limit violations before hitting a controller. Routes that require an authenticated user apply `AuthGuard`, which reads the Better Auth session and attaches `request.user` / `request.session`.
 
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
+## Scripts
 
-## Resources
+| Command                       | Purpose                                      |
+| ------------------------------ | --------------------------------------------- |
+| `yarn build`                   | Compile with `nest build`                     |
+| `yarn start` / `start:dev` / `start:prod` | Run the app (prod / watch / compiled) |
+| `yarn lint`                    | Type-aware lint with oxlint                   |
+| `yarn format`                  | Format `src/` and `test/` with Prettier       |
+| `yarn test` / `test:watch` / `test:cov` | Unit tests via Vitest                 |
+| `yarn test:e2e`                | End-to-end tests (separate Vitest config)     |
+| `yarn prisma:generate`         | Regenerate the Prisma client                  |
+| `yarn prisma:migrate:dev`      | Create and apply a dev migration              |
+| `yarn prisma:migrate:deploy`   | Apply pending migrations (CI/production)      |
+| `yarn prisma:migrate:reset`    | Drop and recreate the database from migrations|
+| `yarn prisma:db:push`          | Push the schema without creating a migration  |
+| `yarn prisma:studio`           | Open Prisma Studio                            |
 
-Check out a few resources that may come in handy when working with NestJS:
+## Testing
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+yarn test        # unit tests
+yarn test:e2e     # e2e tests
+yarn test:cov     # coverage report
+```
 
-## Support
+## Observability (optional)
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+The app is pre-instrumented with [NestJS Observe](https://observe.nestjs.com) for distributed tracing, metrics, logging, and error tracking. Create a free account, add an application, and set `OBSERVE_APP_KEY` / `OBSERVE_APP_SECRET` in `.env` to enable it — the app runs fine without them (telemetry simply no-ops).
 
-## Stay in touch
+## Notes on tooling directories
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+This repo may contain local AI-assistant configuration (`.claude/`, `.agents/`, `.windsurf/`, `.qodo/`) used by various coding assistants during development. These are development tooling, not application code, and are excluded from version control via `.gitignore`.
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+UNLICENSED — private project.

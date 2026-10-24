@@ -8,13 +8,13 @@ export class AuthService implements OnModuleInit {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  onModuleInit() {
+  async onModuleInit() {
     this.auth = createBetterAuth(this.prisma);
   }
 
   get instance() {
     if (!this.auth) {
-      throw new Error('AuthService not initialized');
+      throw new Error('AuthService not initialized. Ensure onModuleInit has completed.');
     }
     return this.auth;
   }

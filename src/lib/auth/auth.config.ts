@@ -1,11 +1,11 @@
 import { betterAuth } from 'better-auth';
-import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { prismaAdapter } from '@better-auth/prisma-adapter';
 import { PrismaService } from '../database/prisma.service.js';
 
 export const createBetterAuth = (prisma: PrismaService) => {
   return betterAuth({
     baseURL: process.env.APP_BASE_URL || 'http://localhost:3000',
-    database: prismaAdapter(prisma, {
+    database: prismaAdapter(prisma.client, {
       provider: 'postgresql',
     }),
     emailAndPassword: {
@@ -18,6 +18,9 @@ export const createBetterAuth = (prisma: PrismaService) => {
     },
     advanced: {
       useSecureCookies: false,
+      database: {
+        joins: true,
+      },
     },
   });
 };
