@@ -50,10 +50,20 @@ function resolveMode(): ArcjetMode {
                   : []),
               ],
             }),
-            // 10 requests burst, refilling 5 every 10s, per IP
-            tokenBucket({ mode, refillRate: 5, interval: 10, capacity: 10 }),
-            // Hard cap: max 10 requests per IP in each 60s window
-            fixedWindow({ mode, window: '60s', max: 10 }),
+            // Dev mode has no real per-user IPs (everything is localhost) and the
+            // frontend fires far more requests per click (every page re-checks auth
+            // on navigation), so the production limits below are far too strict there.
+            ...(process.env.ARCJET_ENV === 'development'
+              ? [
+                  tokenBucket({ mode, refillRate: 50, interval: 10, capacity: 100 }),
+                  fixedWindow({ mode, window: '60s', max: 200 }),
+                ]
+              : [
+                  // 10 requests burst, refilling 5 every 10s, per IP
+                  tokenBucket({ mode, refillRate: 5, interval: 10, capacity: 10 }),
+                  // Hard cap: max 10 requests per IP in each 60s window
+                  fixedWindow({ mode, window: '60s', max: 10 }),
+                ]),
           ],
         };
       },

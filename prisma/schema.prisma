@@ -17,6 +17,17 @@ enum Role {
   ADMIN
 }
 
+enum HackathonStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum TeamRole {
+  LEADER
+  MEMBER
+}
+
 model User {
   id            String         @id @default(cuid())
   email         String         @unique
@@ -90,16 +101,20 @@ model Verification {
 }
 
 model Hackathon {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   title       String
   description String
   startDate   DateTime
   endDate     DateTime
   location    String?
   maxTeams    Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  status      HackathonStatus @default(DRAFT)
+  maxTeamSize Int?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   teams       Team[]
+  tasks       Task[]
+  scheduleItems ScheduleItem[]
 
   @@map("hackathon")
 }
@@ -113,22 +128,76 @@ model Team {
   updatedAt   DateTime   @updatedAt
   hackathon   Hackathon  @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
   members     TeamMember[]
+  submission  Submission?
+  completions TaskCompletion[]
 
   @@unique([hackathonId, name])
   @@index([hackathonId])
   @@map("team")
 }
 
+model Submission {
+  id          String   @id @default(cuid())
+  teamId      String   @unique
+  link        String
+  description String?
+  submittedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("submission")
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  hackathonId String
+  title       String
+  description String?
+  order       Int
+  createdAt   DateTime @default(now())
+  hackathon   Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  completions TaskCompletion[]
+
+  @@index([hackathonId])
+  @@map("task")
+}
+
+model TaskCompletion {
+  id                String   @id @default(cuid())
+  taskId            String
+  teamId            String
+  completedByUserId String
+  completedAt       DateTime @default(now())
+  task              Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  team              Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, teamId])
+  @@map("task_completion")
+}
+
+model ScheduleItem {
+  id          String   @id @default(cuid())
+  hackathonId String
+  title       String
+  time        DateTime
+  hackathon   Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+
+  @@index([hackathonId])
+  @@map("schedule_item")
+}
+
 model TeamMember {
-  id        String   @id @default(cuid())
-  teamId    String
-  userId    String
-  role      String   @default("MEMBER")
-  joinedAt  DateTime @default(now())
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  teamId      String
+  userId      String
+  hackathonId String
+  role        TeamRole @default(MEMBER)
+  joinedAt    DateTime @default(now())
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, userId])
+  @@unique([hackathonId, userId])
   @@index([teamId])
   @@index([userId])
   @@map("team_member")

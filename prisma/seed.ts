@@ -1,21 +1,32 @@
 import 'dotenv/config';
 import { PrismaClient } from '../generated/prisma/client.js';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { createBetterAuth } from '../src/lib/auth/auth.config.js';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
-async function main() {
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@hackathon.dev' },
-    update: {},
-    create: {
-      email: 'admin@hackathon.dev',
-      name: 'Hackathon Admin',
-      emailVerified: true,
-      role: 'ADMIN',
-    },
+const SEED_PASSWORD = 'password123';
+
+const auth = createBetterAuth({ client: prisma } as any, {
+  sendVerificationEmail: async () => {},
+} as any);
+
+/** Creates the user through better-auth (so it gets a real, correctly hashed password credential), idempotently. */
+async function ensureUser(email: string, name: string) {
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (!existing) {
+    await auth.api.signUpEmail({ body: { email, password: SEED_PASSWORD, name } });
+  }
+  return prisma.user.update({
+    where: { email },
+    data: { emailVerified: true },
   });
+}
+
+async function main() {
+  const admin = await ensureUser('admin@hackathon.dev', 'Hackathon Admin');
+  await prisma.user.update({ where: { id: admin.id }, data: { role: 'ADMIN' } });
 
   const participants = await Promise.all(
     [
@@ -23,13 +34,7 @@ async function main() {
       { email: 'bob@hackathon.dev', name: 'Bob Rivera' },
       { email: 'chen@hackathon.dev', name: 'Chen Wu' },
       { email: 'dina@hackathon.dev', name: 'Dina Osei' },
-    ].map((u) =>
-      prisma.user.upsert({
-        where: { email: u.email },
-        update: {},
-        create: { ...u, emailVerified: true, role: 'PARTICIPANT' },
-      }),
-    ),
+    ].map((u) => ensureUser(u.email, u.name)),
   );
 
   const hackathon = await prisma.hackathon.upsert({
@@ -43,6 +48,7 @@ async function main() {
       endDate: new Date('2026-11-16T18:00:00Z'),
       location: 'San Francisco, CA',
       maxTeams: 20,
+      status: 'PUBLISHED',
     },
   });
 
@@ -71,22 +77,22 @@ async function main() {
   await prisma.teamMember.upsert({
     where: { teamId_userId: { teamId: teamAlpha.id, userId: alice.id } },
     update: {},
-    create: { teamId: teamAlpha.id, userId: alice.id, role: 'LEAD' },
+    create: { teamId: teamAlpha.id, userId: alice.id, hackathonId: hackathon.id, role: 'LEADER' },
   });
   await prisma.teamMember.upsert({
     where: { teamId_userId: { teamId: teamAlpha.id, userId: bob.id } },
     update: {},
-    create: { teamId: teamAlpha.id, userId: bob.id, role: 'MEMBER' },
+    create: { teamId: teamAlpha.id, userId: bob.id, hackathonId: hackathon.id, role: 'MEMBER' },
   });
   await prisma.teamMember.upsert({
     where: { teamId_userId: { teamId: teamBeta.id, userId: chen.id } },
     update: {},
-    create: { teamId: teamBeta.id, userId: chen.id, role: 'LEAD' },
+    create: { teamId: teamBeta.id, userId: chen.id, hackathonId: hackathon.id, role: 'LEADER' },
   });
   await prisma.teamMember.upsert({
     where: { teamId_userId: { teamId: teamBeta.id, userId: dina.id } },
     update: {},
-    create: { teamId: teamBeta.id, userId: dina.id, role: 'MEMBER' },
+    create: { teamId: teamBeta.id, userId: dina.id, hackathonId: hackathon.id, role: 'MEMBER' },
   });
 
   console.log('Seed complete:', {
@@ -94,6 +100,7 @@ async function main() {
     participants: participants.map((p) => p.email),
     hackathon: hackathon.title,
     teams: [teamAlpha.name, teamBeta.name],
+    password: SEED_PASSWORD,
   });
 }
 
