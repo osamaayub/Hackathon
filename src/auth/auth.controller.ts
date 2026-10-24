@@ -1,10 +1,24 @@
-import { Controller, Get, Post, Body, Req, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Req, HttpException, HttpStatus } from '@nestjs/common';
 import type { Request } from 'express';
+import { APIError } from 'better-auth';
 import { AuthService } from '../lib/auth/auth.service.js';
 import { SignUpDto } from './dto/sign-up.dto.js';
 import { SignInDto } from './dto/sign-in.dto.js';
 import { RevokeSessionDto } from './dto/revoke-session.dto.js';
 import { UnlinkAccountDto } from './dto/unlink-account.dto.js';
+
+function toHttpException(error: unknown, fallbackMessage: string): HttpException {
+  if (error instanceof APIError) {
+    return new HttpException(
+      { message: error.message || fallbackMessage, code: error.body?.code },
+      error.statusCode,
+    );
+  }
+  return new HttpException(
+    error instanceof Error ? error.message : fallbackMessage,
+    HttpStatus.BAD_REQUEST,
+  );
+}
 
 @Controller('auth')
 export class AuthController {
@@ -24,7 +38,7 @@ export class AuthController {
 
       return session;
     } catch (error) {
-      throw new BadRequestException(error instanceof Error ? error.message : 'Sign up failed');
+      throw toHttpException(error, 'Sign up failed');
     }
   }
 
@@ -41,7 +55,7 @@ export class AuthController {
 
       return session;
     } catch (error) {
-      throw new BadRequestException(error instanceof Error ? error.message : 'Sign in failed');
+      throw toHttpException(error, 'Sign in failed');
     }
   }
 
@@ -55,7 +69,7 @@ export class AuthController {
 
       return { success: true };
     } catch (error) {
-      throw new BadRequestException(error instanceof Error ? error.message : 'Sign out failed');
+      throw toHttpException(error, 'Sign out failed');
     }
   }
 
@@ -69,7 +83,7 @@ export class AuthController {
 
       return session;
     } catch (error) {
-      throw new BadRequestException(error instanceof Error ? error.message : 'Get session failed');
+      throw toHttpException(error, 'Get session failed');
     }
   }
 
@@ -83,7 +97,7 @@ export class AuthController {
 
       return sessions;
     } catch (error) {
-      throw new BadRequestException(error instanceof Error ? error.message : 'List sessions failed');
+      throw toHttpException(error, 'List sessions failed');
     }
   }
 
@@ -98,7 +112,7 @@ export class AuthController {
 
       return result;
     } catch (error) {
-      throw new BadRequestException(error instanceof Error ? error.message : 'Revoke session failed');
+      throw toHttpException(error, 'Revoke session failed');
     }
   }
 
@@ -112,7 +126,7 @@ export class AuthController {
 
       return result;
     } catch (error) {
-      throw new BadRequestException(error instanceof Error ? error.message : 'Revoke all sessions failed');
+      throw toHttpException(error, 'Revoke all sessions failed');
     }
   }
 
@@ -126,7 +140,7 @@ export class AuthController {
 
       return result;
     } catch (error) {
-      throw new BadRequestException(error instanceof Error ? error.message : 'Revoke other sessions failed');
+      throw toHttpException(error, 'Revoke other sessions failed');
     }
   }
 
@@ -140,7 +154,7 @@ export class AuthController {
 
       return accounts;
     } catch (error) {
-      throw new BadRequestException(error instanceof Error ? error.message : 'List accounts failed');
+      throw toHttpException(error, 'List accounts failed');
     }
   }
 
@@ -155,7 +169,7 @@ export class AuthController {
 
       return result;
     } catch (error) {
-      throw new BadRequestException(error instanceof Error ? error.message : 'Unlink account failed');
+      throw toHttpException(error, 'Unlink account failed');
     }
   }
 }

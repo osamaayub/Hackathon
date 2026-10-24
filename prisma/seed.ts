@@ -76,7 +76,7 @@ async function main() {
   await prisma.teamMember.upsert({
     where: { teamId_userId: { teamId: teamAlpha.id, userId: bob.id } },
     update: {},
-    create: { teamId: teamAlpha.id, userId: bob.id, role: 'PARTICIPANT' },
+    create: { teamId: teamAlpha.id, userId: bob.id, role: 'MEMBER' },
   });
   await prisma.teamMember.upsert({
     where: { teamId_userId: { teamId: teamBeta.id, userId: chen.id } },
@@ -86,7 +86,7 @@ async function main() {
   await prisma.teamMember.upsert({
     where: { teamId_userId: { teamId: teamBeta.id, userId: dina.id } },
     update: {},
-    create: { teamId: teamBeta.id, userId: dina.id, role: 'PARTICIPANT' },
+    create: { teamId: teamBeta.id, userId: dina.id, role: 'MEMBER' },
   });
 
   console.log('Seed complete:', {
