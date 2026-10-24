@@ -34,6 +34,111 @@
     ora "9.4.1"
     rxjs "7.8.2"
 
+"@arcjet/analyze-wasm@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/analyze-wasm/-/analyze-wasm-1.14.1.tgz#405685d509c30145492747a783d089a4149eea57"
+  integrity sha512-7HcQOaNlWty5iXR1aM18/afG8by8L7mt5BFe47liZPf9sIsAmQFiUsDyRVbkKzYca1TXHLm4QGGn1Ko+8G9cyQ==
+
+"@arcjet/analyze@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/analyze/-/analyze-1.14.1.tgz#119b87a234bb1a83ef047b83a5743219ae231cf2"
+  integrity sha512-/ifvV/anlvb0XjHP+P5FKm5XS1MQXFH3VWTe73wbOGh+lzD9CGGEiHCIMhCvlEnJmRwoRKpeT3OYh6pJMLn5BA==
+  dependencies:
+    "@arcjet/analyze-wasm" "1.14.1"
+    "@arcjet/protocol" "1.14.1"
+
+"@arcjet/body@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/body/-/body-1.14.1.tgz#020a0a794c037e85e0f33192a460fb3b4cada4bb"
+  integrity sha512-GocI9RCucdfsuDfoGvqVbIM1NVxj0w97zJLpWlxbgFcPFIrapQKhM3JF/nioy8IJrhlay0fbNOSnPff5TcQh0Q==
+
+"@arcjet/cache@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/cache/-/cache-1.14.1.tgz#b7d9d384433afcf28cb6d080f399c8bb049c7622"
+  integrity sha512-lncLtwhRrH9LmXX/yRFa1TjJPN6MQKNW5JQPlr8Po7xwMojNmizOmp3SUYwRDTrXTxzxavB/L3S5jz381huQeQ==
+
+"@arcjet/duration@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/duration/-/duration-1.14.1.tgz#31e4aafcb6250d41a85207812333923efeaafbc6"
+  integrity sha512-HbJMDjwY7vDdgFTiuPmI1LD/pst5IegCAbMtNqLTiAFpgJmtutt8gMUvfsoCdSad00eEfTfO4qIufp4M2zEhqw==
+
+"@arcjet/env@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/env/-/env-1.14.1.tgz#620cc1018dfcf8bab87273defbc2d59773462169"
+  integrity sha512-v8uvPl/FUNrtzQ+uhMomZIHhgsOVY4Bpn9xNgJ+/1Dhc9YaX+RrgAhtA/hbvEehWX21JrPkg3OYYNg5OyHxQbg==
+
+"@arcjet/headers@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/headers/-/headers-1.14.1.tgz#429772e513af691ecc050724e3f7b5e651f180d1"
+  integrity sha512-FdOnZQwI061i7iaALqc0G1dPIL40vy7PSFy1vh39KULOjQIGGlyRUFxsjTsEHEiSSE5/18aZ3FHTNa21TtvI0g==
+
+"@arcjet/ip@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/ip/-/ip-1.14.1.tgz#cd745205fbf2fe569bda1332e371257f2aba08ea"
+  integrity sha512-I9CsQHIpP1j/obDW4DLcNucJ+WKpqvlBIOjUxSgUVGq0G9wgP1qsO8ByPdCR3vWQtnQMJpGv4l6qhP3woOU9lQ==
+
+"@arcjet/logger@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/logger/-/logger-1.14.1.tgz#1cfa2e777a78022e8469771d346fca6b7f465659"
+  integrity sha512-9xCRIkb+Ve/lqLThYl3LGhCHpz/W5L0OTRKvFgmecDscPD6r0XrqXyK4WwU+pCDVMJnIhsOQKUWulBQpHOsHDw==
+  dependencies:
+    "@arcjet/sprintf" "1.14.1"
+
+"@arcjet/nest@^1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/nest/-/nest-1.14.1.tgz#40d5eba26da70327a0a11a2913608f638b7c733c"
+  integrity sha512-74EeU+aDnFD62BwyJCAcNjSpfN19YsQHhvfGBFLZWBg/DH5nKvR1mFs45aQLVsj/UIMleQ/1SmHQKhJ2+0VcQQ==
+  dependencies:
+    "@arcjet/body" "1.14.1"
+    "@arcjet/env" "1.14.1"
+    "@arcjet/headers" "1.14.1"
+    "@arcjet/ip" "1.14.1"
+    "@arcjet/logger" "1.14.1"
+    "@arcjet/protocol" "1.14.1"
+    "@arcjet/transport" "1.14.1"
+    arcjet "1.14.1"
+
+"@arcjet/protocol@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/protocol/-/protocol-1.14.1.tgz#d8e453ebba87412f1bfe242a14c1a10908a1f02a"
+  integrity sha512-SvP37kfeXaSHIFkVU94tUstw5BcgIiQJXLu3QPFnc8e1yxfB1cvyMeTNNdO6ToAyxE4j+ecgg+0y/rTJqkrvkA==
+  dependencies:
+    "@arcjet/cache" "1.14.1"
+    "@bufbuild/protobuf" "2.15.0"
+    "@connectrpc/connect" "2.2.0"
+
+"@arcjet/runtime@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/runtime/-/runtime-1.14.1.tgz#91337be37e2aa7ea2714b8af85fdcfbbbd2c5851"
+  integrity sha512-G2hAfpPI68nzZQ/m1MWwiwE9cubgVGlgaIGNYvsaM3B9Bil/6SiSaovDlC9gYH4lspSX3v96mvBuNywC2/96rw==
+
+"@arcjet/skills@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/skills/-/skills-1.14.1.tgz#98f3c8a9ded104c71f5cf70090567192cd549153"
+  integrity sha512-tQgFwH1mfkyyIilch0h1kUn3l4oHb2OFbTQnD7qqx0lTYuEWPW8P9/TsKHr/f5bxeRodqNIQS1eM3bLhULNj4A==
+
+"@arcjet/sprintf@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/sprintf/-/sprintf-1.14.1.tgz#e537903a5a2609a83de0bee61207cfdbcf666c4c"
+  integrity sha512-XKRvFwQfOny3XfQVHTiBf1ttMhMFYPIQAOHQsMtGLSub8npmhqrA6/w0Wq9NNbgXz9686YMJ7edvdhNXNgzhTg==
+
+"@arcjet/stable-hash@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/stable-hash/-/stable-hash-1.14.1.tgz#bb459b9bea49d5fd414095b66e9875bea2e6d183"
+  integrity sha512-2TGK361o6JizaAKb60wu3FsXxdhYFeI4yoQX0xkz4Ux7rnUxGBLmeM8oL90WjOr0r9injmHCQOPndBO8LHhASQ==
+
+"@arcjet/transport@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@arcjet/transport/-/transport-1.14.1.tgz#1fa4513e15dffc6ac0caf06512188be6b83097e1"
+  integrity sha512-yLit6yx3TyX/9veislVYDZbxhI/1MahIH3Xc6ofDJHLDFgIAsHqdWOQaF+M8O5+wwbjWOZrHr2h8boxVptfafg==
+  dependencies:
+    "@arcjet/env" "1.14.1"
+    "@arcjet/logger" "1.14.1"
+    "@bufbuild/protobuf" "2.15.0"
+    "@connectrpc/connect" "2.2.0"
+    "@connectrpc/connect-node" "2.2.0"
+    "@connectrpc/connect-web" "2.2.0"
+
 "@babel/helper-string-parser@^7.29.7":
   version "7.29.7"
   resolved "https://registry.yarnpkg.com/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz#7f0871d99824d23137d60f86fcf6130fd5a1b51f"
@@ -69,10 +174,30 @@
   resolved "https://registry.yarnpkg.com/@borewit/text-codec/-/text-codec-0.2.2.tgz#75025f735c0983b3a871668804a57387e3649375"
   integrity sha512-DDaRehssg1aNrH4+2hnj1B7vnUGEjU6OIlyRdkMd0aUdIUvKXrJfXsy8LVtXAy7DRvYVluWbMspsRhz2lcW0mQ==
 
+"@bufbuild/protobuf@2.15.0":
+  version "2.15.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-2.15.0.tgz#9706bf5dea2c27bc9dcaccc0c2aac24e0efa6677"
+  integrity sha512-DAheWUkVr/SJTWCc+lg9dhY0eN4SaWlf4+bG1KzHeXbnqt0AfB/NX0Z+VunGlM1ki1B4zVvye27MpKh/svySUA==
+
 "@colors/colors@1.5.0":
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
   integrity sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==
+
+"@connectrpc/connect-node@2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@connectrpc/connect-node/-/connect-node-2.2.0.tgz#8813f768ea83ce363f2a817db166d016c66692ea"
+  integrity sha512-E6uUO6e11WdynAuBjuN+0WpHjqxEM9BNDdfDIJHcn49Esg/WxSIbn2y1KFt9XL96IJi01qdBbvubcdpBz1X3Zw==
+
+"@connectrpc/connect-web@2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@connectrpc/connect-web/-/connect-web-2.2.0.tgz#441903019a3aedc9316a25c4260597cc5d3b93fa"
+  integrity sha512-uuBUcBTYfb/r1o98LzCCZk1H90yx0vmZ5m21dpw/q4EUwsKwkCDGI8H0aEdjcZld+Q2jJ5A5ADvPqfb6lzQ/sg==
+
+"@connectrpc/connect@2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@connectrpc/connect/-/connect-2.2.0.tgz#45cd5c5e539699ee3d9c7ae7fb670293bce7dbed"
+  integrity sha512-M63OQ1ZFcPUm85CuewJ9G9CMV8LjzGR9935xOnXNQGSazAbwMb3x2W7vXBYM1zqrP7XFD8uxp/dUAhirclgwnQ==
 
 "@inquirer/ansi@^2.0.9":
   version "2.0.9"
@@ -848,6 +973,20 @@ append-field@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/append-field/-/append-field-1.0.0.tgz#1e3440e915f0b1203d23748e78edd7b9b5b43e56"
   integrity sha512-klpgFSWLW1ZEs8svjfb7g4qWY0YS5imI82dTg+QahUvJ8YqAY0P10Uk8tTyh9ZGuYEZEMaeJYCF5BFuX552hsw==
+
+arcjet@1.14.1:
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/arcjet/-/arcjet-1.14.1.tgz#4112e356b368d13db9758ea098f398098693857c"
+  integrity sha512-MDwQobCG93yp1AcSrcaeDPTVrPLcliQbeYMTKB3v8qMfIC9jjJkzf9ZTZClYLyS+h7NagAfCu1hbhwFxzxEaVA==
+  dependencies:
+    "@arcjet/analyze" "1.14.1"
+    "@arcjet/cache" "1.14.1"
+    "@arcjet/duration" "1.14.1"
+    "@arcjet/headers" "1.14.1"
+    "@arcjet/protocol" "1.14.1"
+    "@arcjet/runtime" "1.14.1"
+    "@arcjet/skills" "1.14.1"
+    "@arcjet/stable-hash" "1.14.1"
 
 array-timsort@^1.0.3:
   version "1.0.3"
