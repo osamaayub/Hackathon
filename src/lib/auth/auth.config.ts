@@ -12,6 +12,18 @@ export const createBetterAuth = (prisma: PrismaService) => {
       enabled: true,
       requireEmailVerification: false,
     },
+    user: {
+      additionalFields: {
+        // Server-owned: always PARTICIPANT on sign-up, never accepted from
+        // the client. Admins are provisioned out of band (prisma/seed.ts).
+        role: {
+          type: 'string',
+          required: true,
+          defaultValue: 'PARTICIPANT',
+          input: false,
+        },
+      },
+    },
     session: {
       expiresIn: 60 * 60 * 24 * 7, // 7 days
       updateAge: 60 * 60 * 24, // 1 day

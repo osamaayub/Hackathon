@@ -12,6 +12,11 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  PARTICIPANT
+  ADMIN
+}
+
 model User {
   id            String         @id @default(cuid())
   email         String         @unique
@@ -24,6 +29,7 @@ model User {
   emailVerified Boolean        @default(false)
   image         String?
   teamMembers   TeamMember[]
+  role          Role           @default(PARTICIPANT)
 
   @@map("user")
 }
@@ -117,7 +123,7 @@ model TeamMember {
   id        String   @id @default(cuid())
   teamId    String
   userId    String
-  role      String   @default("member")
+  role      String   @default("PARTICIPANT")
   joinedAt  DateTime @default(now())
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
