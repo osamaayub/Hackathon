@@ -232,6 +232,15 @@ Verification emails are sent with Resend through `MailService`. With no `RESEND_
 
 The project has two deployable parts.
 
+**Backend on Vercel (free, second project):** NestJS runs on Vercel with no extra code because the entry file is `src/main.ts`.
+
+1. In Vercel choose **Add New > Project**, import this repository again, name it `hackathon-backend`, and leave **Root Directory** empty (the repo root). [`vercel.json`](vercel.json) sets the Yarn install and the build.
+2. Add the environment variables from [`.env.example`](.env.example) before deploying: `DATABASE_URL`, `ARCJET_KEY`, `RESEND_API_KEY`, `BETTER_AUTH_SECRET`, `FRONTEND_URL`, `APP_BASE_URL`, `CONTACT_TO_EMAIL`, `NODE_ENV=production`, `ARCJET_ENV=production`, `TRUST_PROXY=1`. Do not set `PORT`.
+3. Deploy, then open `https://<project>.vercel.app/` and check that it answers.
+4. In the frontend project set `BACKEND_URL` to that URL and redeploy.
+
+If requests to the backend return a Vercel sign in page, switch off **Vercel Authentication** under the backend project's Settings > Deployment Protection.
+
 **Backend on Render (recommended, free):** the repository includes a Blueprint, [`render.yaml`](render.yaml).
 
 1. In Render choose **New > Blueprint**, pick this repository and the branch that contains `render.yaml`.
