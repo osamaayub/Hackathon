@@ -24,8 +24,27 @@ export class MailService {
   }
 
   async sendVerificationEmail(to: string, verificationUrl: string): Promise<void> {
+    await this.deliver(
+      to,
+      'Verify your email',
+      `<p>Click the link below to verify your email address:</p><p><a href="${verificationUrl}">${verificationUrl}</a></p>`,
+      `Verification email for ${to}: ${verificationUrl}`,
+    );
+  }
+
+  async sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
+    await this.deliver(
+      to,
+      'Reset your password',
+      `<p>We received a request to reset your password. Click the link below to choose a new one. The link works for one hour.</p><p><a href="${resetUrl}">${resetUrl}</a></p><p style="color:#888;font-size:12px">If you did not ask for this, you can ignore this email.</p>`,
+      `Password reset email for ${to}: ${resetUrl}`,
+    );
+  }
+
+  /** Sends a transactional email, honouring MAIL_OVERRIDE_TO. Failures are logged, not thrown. */
+  private async deliver(to: string, subject: string, html: string, devStubMessage: string): Promise<void> {
     if (!this.resend) {
-      this.logger.log(`[dev stub] Verification email for ${to}: ${verificationUrl}`);
+      this.logger.log(`[dev stub] ${devStubMessage}`);
       return;
     }
 
@@ -37,12 +56,12 @@ export class MailService {
     const { error } = await this.resend.emails.send({
       from: this.fromEmail,
       to: recipient,
-      subject: 'Verify your email',
-      html: `<p>Click the link below to verify your email address:</p><p><a href="${verificationUrl}">${verificationUrl}</a></p>${note}`,
+      subject,
+      html: html + note,
     });
 
     if (error) {
-      this.logger.error(`Resend failed to send to ${recipient}: ${error.message}`);
+      this.logger.error(`Resend failed to send "${subject}" to ${recipient}: ${error.message}`);
     }
   }
 

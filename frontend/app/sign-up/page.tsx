@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, MailCheck } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,6 @@ export default function SignUpPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [sentTo, setSentTo] = useState<string | null>(null);
 
   // If sign up produced a live session (verification not required), go straight in.
   useEffect(() => {
@@ -45,8 +44,8 @@ export default function SignUpPage() {
     setSubmitting(true);
     try {
       await signUp(email, password, name || undefined);
-      setSentTo(email);
-      toast.success('Account created', { description: 'Check your email to verify your address.' });
+      toast.success('Account created', { description: 'Check your email to verify your address, then sign in.' });
+      router.push(`/sign-in?registered=1&email=${encodeURIComponent(email)}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Sign up failed';
       setError(message);
@@ -54,30 +53,6 @@ export default function SignUpPage() {
     } finally {
       setSubmitting(false);
     }
-  }
-
-  if (sentTo) {
-    return (
-      <AuthShell>
-        <span className="flex size-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
-          <MailCheck className="size-6" />
-        </span>
-        <h1 className="mt-5 text-3xl font-semibold tracking-tight">Check your email</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          We sent a verification link to <span className="font-medium text-foreground">{sentTo}</span>. Open it to
-          activate your account, then sign in.
-        </p>
-        <Button asChild className="mt-8 h-10 w-full">
-          <Link href="/sign-in">Go to sign in</Link>
-        </Button>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Wrong address?{' '}
-          <button className="text-primary hover:underline" onClick={() => setSentTo(null)}>
-            Go back
-          </button>
-        </p>
-      </AuthShell>
-    );
   }
 
   const score = password ? strength(password) : 0;

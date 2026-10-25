@@ -36,7 +36,6 @@ model User {
   updatedAt     DateTime       @updatedAt
   sessions      Session[]
   accounts      Account[]
-  verifications Verification[]
   emailVerified Boolean        @default(false)
   image         String?
   teamMembers   TeamMember[]
@@ -86,6 +85,8 @@ model Account {
   @@map("account")
 }
 
+// `identifier` is free form in Better Auth: an email for email verification, or "reset-password:<token>"
+// for password resets, so it must not be a foreign key to User.email.
 model Verification {
   id         String   @id @default(cuid())
   identifier String
@@ -93,7 +94,6 @@ model Verification {
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  user       User     @relation(fields: [identifier], references: [email], onDelete: Cascade)
 
   @@unique([identifier, value])
   @@index([identifier])
