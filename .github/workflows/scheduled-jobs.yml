@@ -3,9 +3,9 @@ name: Scheduled jobs
 # A serverless host such as Vercel cannot keep timers running, so this workflow plays the part of cron:
 # it calls the backend's secured POST /cron/:job endpoint on a schedule.
 #
-# Set these two repository secrets (Settings > Secrets and variables > Actions):
-#   BACKEND_URL  the backend's public address, for example https://hackathon-backend-seven-eta.vercel.app
+# Needs one repository secret (Settings > Secrets and variables > Actions > New repository secret):
 #   CRON_SECRET  the same value as the backend's CRON_SECRET setting
+# Optional: a BACKEND_URL secret overrides the default address below if the backend ever moves.
 #
 # GitHub only runs scheduled workflows from the default branch, and may start them a few minutes late.
 
@@ -31,13 +31,14 @@ jobs:
     steps:
       - name: Call the backend
         env:
-          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          # The backend's public address is not a secret, so it has a default and the secret is optional.
+          BACKEND_URL: ${{ secrets.BACKEND_URL || 'https://hackathon-backend-seven-eta.vercel.app' }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           SCHEDULE: ${{ github.event.schedule }}
           MANUAL_JOB: ${{ inputs.job }}
         run: |
-          if [ -z "$BACKEND_URL" ] || [ -z "$CRON_SECRET" ]; then
-            echo "::notice::BACKEND_URL and CRON_SECRET are not set yet, so nothing was called."
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::notice::The CRON_SECRET repository secret is not set yet, so nothing was called."
             exit 0
           fi
 

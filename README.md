@@ -279,7 +279,7 @@ It currently caches the **leaderboard** (`GET /leaderboard`, 5 minutes) and **pr
 | `warm-cache` | every 5 minutes | recomputes the leaderboard and projects so nobody waits for a cold cache |
 | `cleanup` | hourly | deletes expired sessions and one time tokens |
 
-On a normal server (local, Render, Railway) they run inside the app. A serverless host such as Vercel cannot keep timers alive, so the same jobs are exposed as `POST /cron/:job`, protected by `CRON_SECRET`, and [`.github/workflows/scheduled-jobs.yml`](.github/workflows/scheduled-jobs.yml) calls them. To enable that, add the repository secrets `BACKEND_URL` and `CRON_SECRET`, and set the same `CRON_SECRET` on the backend.
+On a normal server (local, Render, Railway) they run inside the app. A serverless host such as Vercel cannot keep timers alive, so the same jobs are exposed as `POST /cron/:job`, protected by `CRON_SECRET`, and [`.github/workflows/scheduled-jobs.yml`](.github/workflows/scheduled-jobs.yml) calls them. To enable that, create a long random value, set it as `CRON_SECRET` on the backend, and add the same value as a repository secret named `CRON_SECRET`. The backend address defaults to the live one in the workflow; a `BACKEND_URL` secret overrides it.
 
 ## Testing
 
