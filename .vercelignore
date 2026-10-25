@@ -1,0 +1,9 @@
+# Keep the backend upload small: the frontend is its own Vercel project.
+frontend
+docs
+.claude
+.agents
+.git
+node_modules
+dist
+test

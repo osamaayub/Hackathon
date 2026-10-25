@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nestjs",
+  "installCommand": "yarn install --frozen-lockfile",
+  "buildCommand": "yarn build"
+}

@@ -61,10 +61,12 @@ function resolveMode(): ArcjetMode {
                   fixedWindow({ mode, window: '60s', max: 200 }),
                 ]
               : [
-                  // 10 requests burst, refilling 5 every 10s, per IP
-                  tokenBucket({ mode, refillRate: 5, interval: 10, capacity: 10 }),
-                  // Hard cap: max 10 requests per IP in each 60s window
-                  fixedWindow({ mode, window: '60s', max: 10 }),
+                  // The frontend makes several API calls per page (session check, data, per section
+                  // loads), so a single normal visitor needs far more than a handful per minute.
+                  // 100 request burst, refilling 30 every 10s, per IP
+                  tokenBucket({ mode, refillRate: 30, interval: 10, capacity: 100 }),
+                  // Hard cap: max 300 requests per IP in each 60s window
+                  fixedWindow({ mode, window: '60s', max: 300 }),
                 ]),
           ],
         };
