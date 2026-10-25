@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards, Inject } from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthGuard } from '../common/guards/auth.guard.js';
 import { AdminGuard } from '../common/guards/admin.guard.js';
@@ -10,7 +10,7 @@ type AuthedRequest = Request & { user: { id: string; role: string } };
 
 @Controller('hackathons')
 export class HackathonController {
-  constructor(private readonly hackathonService: HackathonService) {}
+  constructor(@Inject(HackathonService) private readonly hackathonService: HackathonService) {}
 
   @UseGuards(AuthGuard)
   @Get()

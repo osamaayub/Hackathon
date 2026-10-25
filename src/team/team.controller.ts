@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards, Inject } from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthGuard } from '../common/guards/auth.guard.js';
 import { TeamService } from './team.service.js';
@@ -9,7 +9,7 @@ type AuthedRequest = Request & { user: { id: string; role: string } };
 
 @Controller('teams')
 export class TeamController {
-  constructor(private readonly teamService: TeamService) {}
+  constructor(@Inject(TeamService) private readonly teamService: TeamService) {}
 
   @Get()
   findByHackathon(

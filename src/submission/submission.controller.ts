@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, Query, Req, UseGuards, Inject } from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthGuard } from '../common/guards/auth.guard.js';
 import { SubmissionService } from './submission.service.js';
@@ -9,7 +9,7 @@ type AuthedRequest = Request & { user: { id: string; role: string } };
 @UseGuards(AuthGuard)
 @Controller()
 export class SubmissionController {
-  constructor(private readonly submissionService: SubmissionService) {}
+  constructor(@Inject(SubmissionService) private readonly submissionService: SubmissionService) {}
 
   @Get('teams/:id/submission')
   getByTeam(@Param('id') id: string) {

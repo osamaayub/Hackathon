@@ -17,7 +17,7 @@ export const createBetterAuth = (prisma: PrismaService, mail: MailService) => {
     // mount), so basePath must match that prefix or links better-auth generates itself
     // (the verification email URL) would point at a route that doesn't exist.
     basePath: '/auth',
-    trustedOrigins: [process.env.FRONTEND_URL || 'http://localhost:3001'],
+    trustedOrigins: [(process.env.FRONTEND_URL || 'http://localhost:3001').replace(/\/+$/, '')],
     database: prismaAdapter(prisma.client, {
       provider: 'postgresql',
     }),

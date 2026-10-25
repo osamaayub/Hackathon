@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../lib/database/prisma.service.js';
 import { isNotFound, isUniqueViolation } from '../common/prisma-errors.js';
 import { parsePagination, toPaginated } from '../common/pagination.js';
@@ -7,7 +7,7 @@ import { UpdateTaskDto } from './dto/update-task.dto.js';
 
 @Injectable()
 export class TaskService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async listByHackathon(
     hackathonId: string,

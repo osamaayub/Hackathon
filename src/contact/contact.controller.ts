@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Inject } from '@nestjs/common';
 import { ContactService } from './contact.service.js';
 import { CreateContactMessageDto } from './dto/create-contact-message.dto.js';
 
@@ -6,7 +6,7 @@ import { CreateContactMessageDto } from './dto/create-contact-message.dto.js';
 // ArcjetGuard still applies its rate limits and bot checks to this route.
 @Controller('contact')
 export class ContactController {
-  constructor(private readonly contactService: ContactService) {}
+  constructor(@Inject(ContactService) private readonly contactService: ContactService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

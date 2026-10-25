@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../lib/database/prisma.service.js';
 import { isNotFound } from '../common/prisma-errors.js';
 import { parsePagination, toPaginated } from '../common/pagination.js';
@@ -7,7 +7,7 @@ import { UpdateScheduleItemDto } from './dto/update-schedule-item.dto.js';
 
 @Injectable()
 export class ScheduleService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async listByHackathon(hackathonId: string, requesterRole: string, page?: string, pageSize?: string) {
     const hackathon = await this.prisma.client.hackathon.findUnique({ where: { id: hackathonId } });

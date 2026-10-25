@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../lib/database/prisma.service.js';
 import { isNotFound } from '../common/prisma-errors.js';
 import { parsePagination, toPaginated } from '../common/pagination.js';
@@ -17,7 +17,7 @@ const profileSelect = {
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async me(userId: string) {
     const user = await this.prisma.client.user.findUnique({ where: { id: userId }, select: profileSelect });

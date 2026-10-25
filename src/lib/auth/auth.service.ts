@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, Inject } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { MailService } from '../mail/mail.service.js';
 import { createBetterAuth } from './auth.config.js';
@@ -8,8 +8,8 @@ export class AuthService implements OnModuleInit {
   private auth: ReturnType<typeof createBetterAuth>;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly mail: MailService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(MailService) private readonly mail: MailService,
   ) {}
 
   async onModuleInit() {

@@ -1,7 +1,8 @@
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { AppModule, ObserveInstrument } from './app.module.js';
+import { AppModule } from './app.module.js';
 
 // Load .env into process.env (Node built-in, no dotenv needed)
 try {
@@ -10,10 +11,9 @@ try {
   // No .env file - rely on real environment variables
 }
 
-async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    instrument: ObserveInstrument,
-  });
+/** Creates and configures the Nest application. Used both for a normal server and for Vercel. */
+async function createApp(): Promise<NestExpressApplication> {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -27,9 +27,35 @@ async function bootstrap() {
     app.set('trust proxy', Number(process.env.TRUST_PROXY) || 1);
   }
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+    // Browsers send the origin without a trailing slash, so strip one if the setting has it.
+    origin: (process.env.FRONTEND_URL || 'http://localhost:3001').replace(/\/+$/, ''),
     credentials: true,
   });
+  return app;
+}
+
+// Vercel runs the app as a serverless function: it needs an exported request handler, and a
+// server that calls listen() never receives traffic there. The app is created on the first
+// request and then reused by later requests on the same instance.
+let appPromise: Promise<NestExpressApplication> | undefined;
+
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
+  appPromise ??= createApp()
+    .then(async (app) => {
+      await app.init();
+      return app;
+    })
+    .catch((error) => {
+      appPromise = undefined; // let the next request try again instead of caching the failure
+      throw error;
+    });
+
+  const app = await appPromise;
+  app.getHttpAdapter().getInstance()(req, res);
+}
+
+// Everywhere else (local development, Render, Railway, Docker) run as a normal server.
+if (!process.env.VERCEL) {
+  const app = await createApp();
   await app.listen(process.env.PORT || 8080);
 }
-await bootstrap();

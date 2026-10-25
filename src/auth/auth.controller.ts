@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, Req, Res, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Req, Res, HttpException, HttpStatus, Inject } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { APIError } from 'better-auth';
 import { AuthService } from '../lib/auth/auth.service.js';
@@ -33,7 +33,7 @@ function applySetCookies(res: Response, headers: Headers): void {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
 
   @Post('sign-up')
   async signUp(@Body() body: SignUpDto, @Res({ passthrough: true }) res: Response) {

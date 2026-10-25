@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../lib/database/prisma.service.js';
 import { isNotFound } from '../common/prisma-errors.js';
 import { parsePagination, toPaginated } from '../common/pagination.js';
@@ -16,7 +16,7 @@ const VALID_NEXT_STATUSES: Record<HackathonStatus, HackathonStatus[]> = {
 
 @Injectable()
 export class HackathonService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async findAll(requesterRole: string, page?: string, pageSize?: string, statusFilter?: string) {
     const pagination = parsePagination(page, pageSize);
