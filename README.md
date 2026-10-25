@@ -1,6 +1,6 @@
 # Hackathon Backend
 
-A NestJS 11 REST API for managing hackathons, teams, and participants — built on the Express adapter, Prisma ORM 7 (PostgreSQL), and Better Auth for authentication. Arcjet provides bot/rate-limit protection at the request level, and NestJS Observe provides tracing, metrics, and logging.
+A NestJS 11 REST API for managing hackathons, teams, and participants — built on the Express adapter, Prisma ORM 7 (PostgreSQL), and Better Auth for authentication, and Resend for transactional email. Arcjet provides bot/rate-limit protection at the request level, and NestJS Observe provides tracing, metrics, and logging.
 
 ## Tech stack
 
@@ -10,6 +10,8 @@ A NestJS 11 REST API for managing hackathons, teams, and participants — built 
 | Language             | TypeScript (ESM, `type: module`)              |
 | Database             | PostgreSQL via Prisma ORM 7 (`@prisma/adapter-pg`) |
 | Authentication       | Better Auth (`better-auth` + Prisma adapter)  |
+| Email                | Resend (`resend`)                             |
+| Frontend             | Next.js 16 + Tailwind 4 + shadcn/ui (`frontend/`) |
 | Security / rate limit| Arcjet (`@arcjet/nest`)                       |
 | Observability        | `@nestjs/observe`                             |
 | Validation           | `class-validator` / `class-transformer`       |
@@ -21,13 +23,16 @@ A NestJS 11 REST API for managing hackathons, teams, and participants — built 
 
 ```
 src/
-├── app.module.ts              # Root module — wires Observe, Arcjet, Prisma, Auth, User, Hackathon
+├── app.module.ts              # Root module — wires Observe, Arcjet, Prisma, Mail, Auth and the feature modules
 ├── main.ts                    # Bootstrap: loads .env, global ValidationPipe, starts HTTP server
 ├── app.controller.ts / app.service.ts
 ├── common/
 │   ├── guards/
 │   │   ├── arcjet.guard.ts    # Global guard — blocks requests Arcjet denies (bots, rate limits)
-│   │   └── auth.guard.ts      # Route guard — requires a valid Better Auth session
+│   │   ├── auth.guard.ts      # Route guard — requires a valid Better Auth session
+│   │   └── admin.guard.ts     # Route guard — requires `Role.ADMIN`
+│   ├── pagination.ts
+│   ├── prisma-errors.ts
 │   └── interceptors/
 │       └── logging.interceptor.ts
 ├── lib/                        # Infrastructure modules (each @Global(), imported once in AppModule)
@@ -38,25 +43,32 @@ src/
 │   │   ├── auth.module.ts
 │   │   ├── auth.config.ts     # Better Auth configuration
 │   │   └── auth.service.ts    # Exposes the Better Auth instance via DI
-│   └── arcjet/
-│       ├── arcjet.module.ts
-│       └── arcjet.service.ts
+│   ├── arcjet/
+│   │   ├── arcjet.module.ts
+│   │   └── arcjet.service.ts
+│   └── mail/
+│       ├── mail.module.ts
+│       └── mail.service.ts    # Resend wrapper; logs to console without RESEND_API_KEY
 ├── auth/                       # Feature module — auth HTTP surface
 │   ├── auth.module.ts
 │   ├── auth.controller.ts     # POST /auth/sign-up, /auth/sign-in, /auth/sign-out, /auth/session
 │   └── dto/
 │       ├── sign-up.dto.ts
 │       └── sign-in.dto.ts
-├── user/
-│   └── user.module.ts
-└── hackathon/
-    └── hackathon.module.ts
+├── user/                       # /users — profile + admin role management
+├── hackathon/                  # /hackathons — CRUD (admin writes)
+├── team/                       # /teams — create, join, leave, manage members
+├── submission/                 # one project submission per team
+├── task/                       # per-hackathon checklist + team completions
+└── schedule/                   # per-hackathon schedule items
+
+frontend/                       # Next.js UI (port 3001)
 
 prisma/
-└── schema.prisma               # User, Session, Account, Verification, Hackathon, Team, TeamMember
+└── schema.prisma               # User, Session, Account, Verification, Hackathon, Team, TeamMember, Submission, Task, TaskCompletion, ScheduleItem
 ```
 
-New infrastructure integrations follow the same pattern: `src/lib/<name>/<name>.module.ts` + `<name>.service.ts`, marked `@Global()` and imported once in `AppModule`. Feature modules live under `src/<name>/`. Shared guards, interceptors, and decorators live under `src/common/`.
+New infrastructure integrations follow the same pattern: `src/lib/<name>/<name>.module.ts` + `<name>.service.ts`, marked `@Global()` and imported once in `AppModule`. Feature modules live under `src/<name>/` (not `src/module/<name>/` as CLAUDE.md suggests). Shared guards, interceptors, and decorators live under `src/common/`.
 
 ## Data model
 
@@ -68,7 +80,13 @@ Defined in `prisma/schema.prisma`, generated into `generated/prisma`:
 - **Verification** — email verification tokens
 - **Hackathon** — an event (title, description, dates, location, max teams)
 - **Team** — belongs to a `Hackathon`, unique per `(hackathonId, name)`
-- **TeamMember** — join table between `Team` and `User`, carries a `role`
+- **TeamMember** — join table between `Team` and `User`, carries a `TeamRole` (`LEADER` / `MEMBER`)
+- **Submission** — one project link + description per team
+- **Task** — an ordered checklist item belonging to a hackathon
+- **TaskCompletion** — records a team completing a task (unique per task + team)
+- **ScheduleItem** — a titled, timed entry on a hackathon's schedule
+
+Enums: `Role` (`PARTICIPANT`, `ADMIN`), `HackathonStatus` (`DRAFT`, `PUBLISHED`, `CLOSED`), `TeamRole`.
 
 ## Getting started
 
@@ -94,7 +112,17 @@ DATABASE_URL=postgres://<user>:<password>@<host>:5432/<db>?sslmode=require
 DIRECT_URL=postgres://<user>:<password>@<host>:5432/<db>?sslmode=require
 
 # Better Auth
-BETTER_AUTH_API_KEY=<your-better-auth-key>
+BETTER_AUTH_SECRET=<long-random-string>
+APP_BASE_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:3001
+
+# Resend (transactional email)
+RESEND_API_KEY=<your-resend-key>
+RESEND_FROM_EMAIL=onboarding@resend.dev
+# Optional: send every email to this inbox instead of the real recipient.
+# Needed while using Resend's shared onboarding sender, which only delivers
+# to the address that owns the Resend account.
+MAIL_OVERRIDE_TO=<your-personal-email>
 
 # Arcjet (bot detection / rate limiting)
 ARCJET_ENV=development
@@ -128,14 +156,44 @@ The API listens on `http://localhost:3000` by default (or `PORT` from `.env`).
 
 ## API
 
-| Method | Route            | Description                              |
-| ------ | ---------------- | ----------------------------------------- |
-| POST   | `/auth/sign-up`   | Create an account (email, password, name) |
-| POST   | `/auth/sign-in`   | Sign in with email + password             |
-| POST   | `/auth/sign-out`  | Invalidate the current session            |
-| POST   | `/auth/session`   | Fetch the current session, if any         |
+Every request passes through the global `ArcjetGuard` first, which blocks bots and rate-limit violations. `AuthGuard` requires a Better Auth session and attaches `request.user` / `request.session`; `AdminGuard` additionally requires `Role.ADMIN`.
 
-Every request passes through the global `ArcjetGuard` first, which blocks bots and rate-limit violations before hitting a controller. Routes that require an authenticated user apply `AuthGuard`, which reads the Better Auth session and attaches `request.user` / `request.session`.
+**Auth** (`/auth`)
+
+| Method | Route | Description |
+| ------ | ----- | ----------- |
+| POST | `/auth/sign-up`, `/auth/sign-in` | Create an account / sign in with email + password |
+| POST | `/auth/sign-out`, `/auth/session` | End the session / fetch the current session |
+| GET | `/auth/verify-email` | Complete email verification |
+| POST | `/auth/send-verification-email` | Resend the verification email |
+| GET | `/auth/sessions` | List your active sessions |
+| POST | `/auth/session/revoke`, `/revoke-all`, `/revoke-others` | Revoke sessions |
+| GET | `/auth/accounts` | List linked accounts |
+| POST | `/auth/account/unlink` | Unlink an account |
+
+**Resources** (auth required unless noted)
+
+| Method | Route | Access | Description |
+| ------ | ----- | ------ | ----------- |
+| GET / PATCH | `/users/me` | user | Read / update your profile |
+| GET | `/users` | admin | List users |
+| PATCH | `/users/:id/role` | admin | Change a user's role |
+| GET | `/hackathons`, `/hackathons/:id` | user | List / read hackathons |
+| POST / PATCH / DELETE | `/hackathons[/:id]` | admin | Manage hackathons |
+| GET | `/teams`, `/teams/:id` | public | List / read teams |
+| POST | `/teams` | user | Create a team |
+| PATCH / DELETE | `/teams/:id` | user | Update / delete a team |
+| POST | `/teams/:id/join`, `/teams/:id/leave` | user | Join / leave a team |
+| DELETE | `/teams/:id/members/:userId` | user | Remove a member |
+| GET / PUT | `/teams/:id/submission` | user | Read / set a team's submission |
+| GET | `/hackathons/:id/submissions` | user | Submission gallery |
+| GET | `/hackathons/:id/tasks` | user | List tasks |
+| POST | `/hackathons/:id/tasks` | admin | Create a task |
+| PATCH / DELETE | `/tasks/:id` | admin | Update / delete a task |
+| POST / DELETE | `/tasks/:id/complete` | user | Mark / unmark a task complete for your team |
+| GET | `/hackathons/:id/schedule` | user | List schedule items |
+| POST | `/hackathons/:id/schedule` | admin | Add a schedule item |
+| PATCH / DELETE | `/schedule/:id` | admin | Update / delete a schedule item |
 
 ## Scripts
 
@@ -153,6 +211,22 @@ Every request passes through the global `ArcjetGuard` first, which blocks bots a
 | `yarn prisma:migrate:reset`    | Drop and recreate the database from migrations|
 | `yarn prisma:db:push`          | Push the schema without creating a migration  |
 | `yarn prisma:studio`           | Open Prisma Studio                            |
+
+## Frontend
+
+A Next.js app lives in `frontend/` and talks to this API.
+
+```bash
+cd frontend
+npm install
+npm run dev     # http://localhost:3001
+```
+
+Set `NEXT_PUBLIC_API_URL` in `frontend/.env.local` (defaults to `http://localhost:3000`). The backend's `FRONTEND_URL` must match the frontend origin so CORS and auth cookies work. The UI supports light/dark mode via the navbar toggle.
+
+## Email
+
+Verification emails are sent with Resend through `MailService`. With no `RESEND_API_KEY` they are logged to the console instead. Resend's shared `onboarding@resend.dev` sender only delivers to the account owner's own address, so set `MAIL_OVERRIDE_TO` to that address during development, or verify a domain and set `RESEND_FROM_EMAIL` for real delivery.
 
 ## Testing
 

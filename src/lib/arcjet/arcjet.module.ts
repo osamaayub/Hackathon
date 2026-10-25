@@ -37,7 +37,9 @@ function resolveMode(): ArcjetMode {
             // Blocks automated clients, but lets search engines through
             // In development, also let curl/scripts through so rate limits can be tested locally
             detectBot({
-              mode,
+              // Local tooling (browser extensions, automated browsers, test runners) is
+              // often classed as a bot, so only log decisions in development.
+              mode: process.env.ARCJET_ENV === 'development' ? 'DRY_RUN' : mode,
               allow: [
                 'CATEGORY:SEARCH_ENGINE',
                 ...(process.env.ARCJET_ENV === 'development'

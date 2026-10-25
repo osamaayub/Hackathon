@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
+import { toast } from 'sonner';
 import { CalendarClock, Loader2, Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { ScheduleItem } from '@/lib/types';
@@ -50,16 +51,24 @@ export function ScheduleSection({ hackathonId, isAdmin }: { hackathonId: string;
       setTitle('');
       setTime('');
       setDialogOpen(false);
+      toast.success('Schedule item added');
       load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add item');
+      const message = err instanceof Error ? err.message : 'Failed to add item';
+      setError(message);
+      toast.error('Could not add schedule item', { description: message });
     } finally {
       setSaving(false);
     }
   }
 
   async function onDelete(id: string) {
-    await api.deleteScheduleItem(id).catch(() => {});
+    try {
+      await api.deleteScheduleItem(id);
+      toast.success('Schedule item removed');
+    } catch (err) {
+      toast.error('Could not remove schedule item', { description: err instanceof Error ? err.message : undefined });
+    }
     load();
   }
 
@@ -71,7 +80,14 @@ export function ScheduleSection({ hackathonId, isAdmin }: { hackathonId: string;
           Schedule
         </CardTitle>
         {isAdmin && (
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) {
+                setTitle('');
+                setTime('');
+                setError(null);
+              }
+            }}>
             <DialogTrigger asChild>
               <Button size="sm" variant="outline">
                 <Plus className="size-3.5" />

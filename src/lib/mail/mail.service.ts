@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { Resend } from 'resend';
 
 @Injectable()
@@ -6,11 +6,15 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
   private readonly resend: Resend | null;
   private readonly fromEmail: string;
+  private readonly overrideTo: string | null;
 
   constructor() {
     const apiKey = process.env.RESEND_API_KEY;
     this.resend = apiKey ? new Resend(apiKey) : null;
     this.fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+    // Resend's shared onboarding sender only delivers to the account owner's own
+    // address, so MAIL_OVERRIDE_TO redirects every email to that personal inbox.
+    this.overrideTo = process.env.MAIL_OVERRIDE_TO?.trim() || null;
 
     if (!this.resend) {
       this.logger.warn(
@@ -25,11 +29,53 @@ export class MailService {
       return;
     }
 
-    await this.resend.emails.send({
+    const recipient = this.overrideTo ?? to;
+    const note = this.overrideTo
+      ? `<p style="color:#888;font-size:12px">Originally addressed to ${to}.</p>`
+      : '';
+
+    const { error } = await this.resend.emails.send({
+      from: this.fromEmail,
+      to: recipient,
+      subject: 'Verify your email',
+      html: `<p>Click the link below to verify your email address:</p><p><a href="${verificationUrl}">${verificationUrl}</a></p>${note}`,
+    });
+
+    if (error) {
+      this.logger.error(`Resend failed to send to ${recipient}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Forwards a contact form message to the team inbox (CONTACT_TO_EMAIL, falling back to
+   * MAIL_OVERRIDE_TO). Without an API key the message is logged so local development still works.
+   */
+  async sendContactMessage(msg: { name: string; email: string; topic: string; message: string }): Promise<void> {
+    const to = process.env.CONTACT_TO_EMAIL?.trim() || this.overrideTo;
+
+    if (!this.resend) {
+      this.logger.log(`[dev stub] Contact message from ${msg.name} <${msg.email}> (${msg.topic}): ${msg.message}`);
+      return;
+    }
+    if (!to) {
+      this.logger.error('Contact message received but neither CONTACT_TO_EMAIL nor MAIL_OVERRIDE_TO is set.');
+      throw new ServiceUnavailableException('Messages cannot be delivered right now. Please try again later.');
+    }
+
+    const esc = (value: string) =>
+      value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    const { error } = await this.resend.emails.send({
       from: this.fromEmail,
       to,
-      subject: 'Verify your email',
-      html: `<p>Click the link below to verify your email address:</p><p><a href="${verificationUrl}">${verificationUrl}</a></p>`,
+      replyTo: msg.email,
+      subject: `[Contact: ${msg.topic}] ${msg.name}`,
+      html: `<p><strong>${esc(msg.name)}</strong> &lt;${esc(msg.email)}&gt; wrote about <em>${esc(msg.topic)}</em>:</p><p style="white-space:pre-wrap">${esc(msg.message)}</p>`,
     });
+
+    if (error) {
+      this.logger.error(`Resend failed to deliver a contact message: ${error.message}`);
+      throw new ServiceUnavailableException('Messages cannot be delivered right now. Please try again later.');
+    }
   }
 }

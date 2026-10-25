@@ -38,8 +38,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
-    await api.signOut();
-    setUser(null);
+    try {
+      await api.signOut();
+    } finally {
+      // Even if the server could not be reached, this device should no longer look signed in.
+      setUser(null);
+    }
   }
 
   return (

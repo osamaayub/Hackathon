@@ -21,12 +21,47 @@ class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+const NETWORK_ERROR = 'Cannot reach the server. Please check your connection and try again.';
+const RETRY_DELAYS_MS = [400, 1200];
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Reads are safe to repeat. The session check is a POST but also read only.
+function isSafeToRetry(path: string, options: RequestInit) {
+  const method = (options.method ?? 'GET').toUpperCase();
+  return method === 'GET' || path === '/auth/session';
+}
+
+/**
+ * fetch() rejects with a TypeError ("Failed to fetch") when the server cannot be reached at all,
+ * for example while the backend restarts. Retry safe requests a couple of times before giving up.
+ */
+async function fetchWithRetry(path: string, options: RequestInit): Promise<Response> {
+  const init: RequestInit = {
     ...options,
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...options.headers },
-  });
+  };
+  const retries = isSafeToRetry(path, options) ? RETRY_DELAYS_MS : [];
+
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(`${API_URL}${path}`, init);
+      // A 5xx on a read is usually a momentary backend or database hiccup.
+      if (res.status >= 500 && attempt < retries.length) {
+        await sleep(retries[attempt]);
+        continue;
+      }
+      return res;
+    } catch {
+      if (attempt >= retries.length) throw new ApiError(NETWORK_ERROR, 0);
+      await sleep(retries[attempt]);
+    }
+  }
+}
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const res = await fetchWithRetry(path, options);
 
   const text = await res.text();
   const body = text ? JSON.parse(text) : undefined;
@@ -78,6 +113,9 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email }),
     }),
+
+  sendContactMessage: (data: { name: string; email: string; topic: string; message: string }) =>
+    request<{ success: boolean }>('/contact', { method: 'POST', body: JSON.stringify(data) }),
 
   getSubmission: (teamId: string) => request<Submission | null>(`/teams/${teamId}/submission`),
 

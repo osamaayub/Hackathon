@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Trophy, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AuthShell } from '@/components/AuthShell';
+import { PasswordInput } from '@/components/PasswordInput';
 
 export default function SignInPage() {
   const { signIn } = useAuth();
@@ -24,64 +26,66 @@ export default function SignInPage() {
     setSubmitting(true);
     try {
       await signIn(email, password);
+      toast.success('Welcome back!', { description: 'You are signed in.' });
       router.push('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign in failed');
+      const message = err instanceof Error ? err.message : 'Sign in failed';
+      setError(message);
+      toast.error('Could not sign in', { description: message });
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="relative flex min-h-[calc(100vh-61px)] items-center justify-center bg-grid px-6 py-16">
-      <Card className="w-full max-w-sm shadow-lg">
-        <CardHeader className="items-center text-center">
-          <span className="mb-2 flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Trophy className="size-5" />
-          </span>
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
-          <CardDescription>Sign in to continue to your hackathons</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            {error && (
-              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
-            )}
-            <Button type="submit" disabled={submitting} className="w-full">
-              {submitting && <Loader2 className="size-4 animate-spin" />}
-              {submitting ? 'Signing in…' : 'Sign in'}
-            </Button>
-          </form>
-          <p className="mt-5 text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{' '}
-            <Link href="/sign-up" className="font-medium text-primary hover:underline">
-              Sign up
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    <AuthShell>
+      <h1 className="text-3xl font-semibold tracking-tight">Welcome back</h1>
+      <p className="mt-1.5 text-sm text-muted-foreground">Sign in to continue to your hackathons.</p>
+
+      <form onSubmit={onSubmit} className="mt-8 space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="h-10"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="password">Password</Label>
+          <PasswordInput
+            id="password"
+            required
+            autoComplete="current-password"
+            placeholder="Your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="h-10"
+          />
+        </div>
+        {error && (
+          <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+            {/verif/i.test(error) && <p className="mt-1 text-xs opacity-80">Check your inbox for the verification link.</p>}
+          </div>
+        )}
+        <Button type="submit" disabled={submitting} className="h-10 w-full shadow-lg shadow-primary/25">
+          {submitting && <Loader2 className="size-4 animate-spin" />}
+          {submitting ? 'Signing in…' : 'Sign in'}
+        </Button>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        New here?{' '}
+        <Link href="/sign-up" className="font-medium text-primary hover:underline">
+          Create an account
+        </Link>
+      </p>
+    </AuthShell>
   );
 }

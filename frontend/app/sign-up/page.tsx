@@ -1,23 +1,43 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Trophy, Loader2 } from 'lucide-react';
+import { Loader2, MailCheck } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AuthShell } from '@/components/AuthShell';
+import { PasswordInput } from '@/components/PasswordInput';
+
+function strength(pw: string) {
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw) || pw.length >= 14) score++;
+  return score;
+}
+
+const strengthLabel = ['Too short', 'Weak', 'Okay', 'Good', 'Strong'];
+const strengthColor = ['bg-muted', 'bg-destructive', 'bg-chart-2', 'bg-chart-3', 'bg-chart-3'];
 
 export default function SignUpPage() {
-  const { signUp } = useAuth();
+  const { user, signUp } = useAuth();
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
+
+  // If sign up produced a live session (verification not required), go straight in.
+  useEffect(() => {
+    if (user) router.push('/');
+  }, [user, router]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -25,70 +45,113 @@ export default function SignUpPage() {
     setSubmitting(true);
     try {
       await signUp(email, password, name || undefined);
-      router.push('/');
+      setSentTo(email);
+      toast.success('Account created', { description: 'Check your email to verify your address.' });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign up failed');
+      const message = err instanceof Error ? err.message : 'Sign up failed';
+      setError(message);
+      toast.error('Could not create account', { description: message });
     } finally {
       setSubmitting(false);
     }
   }
 
+  if (sentTo) {
+    return (
+      <AuthShell>
+        <span className="flex size-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
+          <MailCheck className="size-6" />
+        </span>
+        <h1 className="mt-5 text-3xl font-semibold tracking-tight">Check your email</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          We sent a verification link to <span className="font-medium text-foreground">{sentTo}</span>. Open it to
+          activate your account, then sign in.
+        </p>
+        <Button asChild className="mt-8 h-10 w-full">
+          <Link href="/sign-in">Go to sign in</Link>
+        </Button>
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Wrong address?{' '}
+          <button className="text-primary hover:underline" onClick={() => setSentTo(null)}>
+            Go back
+          </button>
+        </p>
+      </AuthShell>
+    );
+  }
+
+  const score = password ? strength(password) : 0;
+
   return (
-    <div className="relative flex min-h-[calc(100vh-61px)] items-center justify-center bg-grid px-6 py-16">
-      <Card className="w-full max-w-sm shadow-lg">
-        <CardHeader className="items-center text-center">
-          <span className="mb-2 flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Trophy className="size-5" />
-          </span>
-          <CardTitle className="text-2xl">Create your account</CardTitle>
-          <CardDescription>Join a hackathon and start building</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
+    <AuthShell>
+      <h1 className="text-3xl font-semibold tracking-tight">Create your account</h1>
+      <p className="mt-1.5 text-sm text-muted-foreground">Join a hackathon and start building.</p>
+
+      <form onSubmit={onSubmit} className="mt-8 space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            autoComplete="name"
+            placeholder="Ada Lovelace"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="h-10"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="h-10"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="password">Password</Label>
+          <PasswordInput
+            id="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            placeholder="At least 8 characters"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="h-10"
+          />
+          {password && (
+            <div className="flex items-center gap-2 pt-1">
+              <div className="flex flex-1 gap-1">
+                {[1, 2, 3, 4].map((n) => (
+                  <span key={n} className={`h-1 flex-1 rounded-full ${n <= score ? strengthColor[score] : 'bg-muted'}`} />
+                ))}
+              </div>
+              <span className="text-xs text-muted-foreground">{strengthLabel[score]}</span>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={8}
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">At least 8 characters.</p>
-            </div>
-            {error && (
-              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
-            )}
-            <Button type="submit" disabled={submitting} className="w-full">
-              {submitting && <Loader2 className="size-4 animate-spin" />}
-              {submitting ? 'Creating account…' : 'Sign up'}
-            </Button>
-          </form>
-          <p className="mt-5 text-center text-sm text-muted-foreground">
-            Already have an account?{' '}
-            <Link href="/sign-in" className="font-medium text-primary hover:underline">
-              Sign in
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+          )}
+        </div>
+        {error && (
+          <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+        <Button type="submit" disabled={submitting} className="h-10 w-full shadow-lg shadow-primary/25">
+          {submitting && <Loader2 className="size-4 animate-spin" />}
+          {submitting ? 'Creating account…' : 'Create account'}
+        </Button>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Already have an account?{' '}
+        <Link href="/sign-in" className="font-medium text-primary hover:underline">
+          Sign in
+        </Link>
+      </p>
+    </AuthShell>
   );
 }

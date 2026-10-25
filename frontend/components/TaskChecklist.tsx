@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
+import { toast } from 'sonner';
 import { ClipboardList, Loader2, Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Task } from '@/lib/types';
@@ -48,9 +49,12 @@ export function TaskChecklist({
       await api.createTask(hackathonId, { title });
       setTitle('');
       setDialogOpen(false);
+      toast.success('Task added');
       load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add task');
+      const message = err instanceof Error ? err.message : 'Failed to add task';
+      setError(message);
+      toast.error('Could not add task', { description: message });
     } finally {
       setSaving(false);
     }
@@ -61,19 +65,27 @@ export function TaskChecklist({
     try {
       if (task.completedByMyTeam) {
         await api.uncompleteTask(task.id);
+        toast.info('Task marked incomplete');
       } else {
         await api.completeTask(task.id);
+        toast.success('Task completed', { description: task.title });
       }
       load();
-    } catch {
-      // swallow: load() below reflects the real state either way
+    } catch (err) {
+      toast.error('Could not update task', { description: err instanceof Error ? err.message : undefined });
+      load();
     } finally {
       setPendingId(null);
     }
   }
 
   async function onDelete(id: string) {
-    await api.deleteTask(id).catch(() => {});
+    try {
+      await api.deleteTask(id);
+      toast.success('Task removed');
+    } catch (err) {
+      toast.error('Could not remove task', { description: err instanceof Error ? err.message : undefined });
+    }
     load();
   }
 
@@ -92,7 +104,13 @@ export function TaskChecklist({
           )}
         </CardTitle>
         {isAdmin && (
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) {
+                setTitle('');
+                setError(null);
+              }
+            }}>
             <DialogTrigger asChild>
               <Button size="sm" variant="outline">
                 <Plus className="size-3.5" />
