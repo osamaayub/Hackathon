@@ -228,6 +228,26 @@ Set `NEXT_PUBLIC_API_URL` in `frontend/.env.local` (defaults to `http://localhos
 
 Verification emails are sent with Resend through `MailService`. With no `RESEND_API_KEY` they are logged to the console instead. Resend's shared `onboarding@resend.dev` sender only delivers to the account owner's own address, so set `MAIL_OVERRIDE_TO` to that address during development, or verify a domain and set `RESEND_FROM_EMAIL` for real delivery.
 
+## Deployment
+
+The project has two deployable parts.
+
+**Backend (NestJS)** on any Node host (Railway, Render, Fly, ...):
+
+1. Create a service from this repository, root directory `/`.
+2. Build command `npm run build` (generates the Prisma client, then compiles). Start command `npm run start:prod`.
+3. Set the variables listed in [`.env.example`](.env.example) in the host's dashboard, including `NODE_ENV=production` and `TRUST_PROXY=1`.
+4. On a new database, create the tables once with `npx prisma db push --config prisma7.config.ts`, then optionally `npm run prisma:seed`.
+5. Check that `GET /` returns 200 and note the public URL.
+
+**Frontend (Next.js)** on Vercel:
+
+1. Import the repository and set **Root Directory** to `frontend`.
+2. Add `BACKEND_URL` (the backend's public URL, no trailing slash) and `NEXT_PUBLIC_SITE_URL` (the Vercel URL), then redeploy.
+3. On the backend set `FRONTEND_URL` to the Vercel URL and `APP_BASE_URL` to the Vercel URL plus `/backend`, for example `https://your-app.vercel.app/backend`.
+
+With `BACKEND_URL` set, the browser calls `/backend/...` on the Vercel site and Next.js forwards it to the API. That keeps the sign in cookie first party, so it works even in browsers that block third party cookies. Without `BACKEND_URL` the app calls `NEXT_PUBLIC_API_URL` directly, which is what local development uses.
+
 ## Testing
 
 ```bash
