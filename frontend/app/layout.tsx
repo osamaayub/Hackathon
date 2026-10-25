@@ -52,7 +52,7 @@ const jsonLd = {
   ],
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   // Open the API connection (with credentials, for the session cookie) before the first fetch.

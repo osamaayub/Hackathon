@@ -12,7 +12,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 export const createBetterAuth = (prisma: PrismaService, mail: MailService) => {
   return betterAuth({
     secret: process.env.BETTER_AUTH_SECRET,
-    baseURL: process.env.APP_BASE_URL || 'http://localhost:3000',
+    baseURL: process.env.APP_BASE_URL || 'http://localhost:8080',
     // AuthController wraps each better-auth method under /auth/* by hand (no catch-all
     // mount), so basePath must match that prefix or links better-auth generates itself
     // (the verification email URL) would point at a route that doesn't exist.

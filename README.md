@@ -113,7 +113,7 @@ DIRECT_URL=postgres://<user>:<password>@<host>:5432/<db>?sslmode=require
 
 # Better Auth
 BETTER_AUTH_SECRET=<long-random-string>
-APP_BASE_URL=http://localhost:3000
+APP_BASE_URL=http://localhost:8080
 FRONTEND_URL=http://localhost:3001
 
 # Resend (transactional email)
@@ -134,7 +134,7 @@ OBSERVE_APP_KEY=<your-observe-app-key>
 OBSERVE_APP_SECRET=<your-observe-app-secret>
 
 # Server
-PORT=3000
+PORT=8080
 ```
 
 ### 3. Set up the database
@@ -152,7 +152,7 @@ yarn start         # single run
 yarn start:prod    # run compiled dist/main.js (after `yarn build`)
 ```
 
-The API listens on `http://localhost:3000` by default (or `PORT` from `.env`).
+The API listens on `http://localhost:8080` by default (or `PORT` from `.env`).
 
 ## API
 
@@ -222,7 +222,7 @@ npm install
 npm run dev     # http://localhost:3001
 ```
 
-Set `NEXT_PUBLIC_API_URL` in `frontend/.env.local` (defaults to `http://localhost:3000`). The backend's `FRONTEND_URL` must match the frontend origin so CORS and auth cookies work. The UI supports light/dark mode via the navbar toggle.
+Set `NEXT_PUBLIC_API_URL` in `frontend/.env.local` (defaults to `http://localhost:8080`). The backend's `FRONTEND_URL` must match the frontend origin so CORS and auth cookies work. The UI supports light/dark mode via the navbar toggle.
 
 ## Email
 
