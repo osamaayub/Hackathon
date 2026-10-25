@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Query, Req, Res, HttpException, HttpStatus
 import type { Request, Response } from 'express';
 import { APIError } from 'better-auth';
 import { AuthService } from '../lib/auth/auth.service.js';
+import { PrismaService } from '../lib/database/prisma.service.js';
 import { SignUpDto } from './dto/sign-up.dto.js';
 import { SignInDto } from './dto/sign-in.dto.js';
 import { RevokeSessionDto } from './dto/revoke-session.dto.js';
@@ -35,10 +36,30 @@ function applySetCookies(res: Response, headers: Headers): void {
 
 @Controller('auth')
 export class AuthController {
-  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
+  constructor(
+    @Inject(AuthService) private readonly authService: AuthService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+  ) {}
 
   @Post('sign-up')
   async signUp(@Body() body: SignUpDto, @Res({ passthrough: true }) res: Response) {
+    // With email verification required, Better Auth answers "success" for an email that already has
+    // an account, without changing anything. That leaves people believing a new password was saved,
+    // so say plainly that the account exists. (Trade off: this reveals which emails are registered.)
+    const existing = await this.prisma.client.user.findUnique({
+      where: { email: body.email.trim().toLowerCase() },
+      select: { id: true },
+    });
+    if (existing) {
+      throw new HttpException(
+        {
+          message: 'An account with this email already exists. Sign in instead, or use "Forgot password" if you do not remember the password.',
+          code: 'USER_ALREADY_EXISTS',
+        },
+        HttpStatus.CONFLICT,
+      );
+    }
+
     try {
       const auth = this.authService.instance;
       const { headers, response } = await auth.api.signUpEmail({

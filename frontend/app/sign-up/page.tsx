@@ -113,6 +113,16 @@ export default function SignUpPage() {
         {error && (
           <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
+            {/already exists/i.test(error) && (
+              <p className="mt-2 flex flex-wrap gap-x-4 text-xs font-semibold">
+                <Link href={`/sign-in?email=${encodeURIComponent(email)}`} className="underline">
+                  Sign in
+                </Link>
+                <Link href="/forgot-password" className="underline">
+                  Forgot password
+                </Link>
+              </p>
+            )}
           </div>
         )}
         <Button type="submit" disabled={submitting} className="h-10 w-full shadow-lg shadow-primary/25">
