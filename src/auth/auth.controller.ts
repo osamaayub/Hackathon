@@ -78,23 +78,49 @@ export class AuthController {
     }
   }
 
+  // Participants and organizers (admins) sign in on separate pages. Each route checks the account's role
+  // after the password is verified, so a participant can not use the organizer page and the other way round.
   @Post('sign-in')
   async signIn(@Body() body: SignInDto, @Res({ passthrough: true }) res: Response) {
-    try {
-      const auth = this.authService.instance;
-      const { headers, response } = await auth.api.signInEmail({
-        body: {
-          email: body.email,
-          password: body.password,
-        },
+    return this.signInAs(body, res, 'PARTICIPANT');
+  }
+
+  @Post('admin/sign-in')
+  async adminSignIn(@Body() body: SignInDto, @Res({ passthrough: true }) res: Response) {
+    return this.signInAs(body, res, 'ADMIN');
+  }
+
+  private async signInAs(body: SignInDto, res: Response, portal: 'PARTICIPANT' | 'ADMIN') {
+    const { headers, response } = await this.authService.instance.api
+      .signInEmail({
+        body: { email: body.email, password: body.password },
         returnHeaders: true,
+      })
+      .catch((error: unknown) => {
+        throw toHttpException(error, 'Sign in failed');
       });
 
-      applySetCookies(res, headers);
-      return response;
-    } catch (error) {
-      throw toHttpException(error, 'Sign in failed');
+    const isAdmin = response.user.role === 'ADMIN';
+
+    if (portal === 'ADMIN' ? !isAdmin : isAdmin) {
+      // The password was right, but this account belongs on the other page. Discard the session that was
+      // just created so nothing stays signed in, and do not forward its cookie.
+      if (response.token) {
+        await this.prisma.client.session.deleteMany({ where: { token: response.token } });
+      }
+      throw new HttpException(
+        {
+          message: isAdmin
+            ? 'This is an organizer account. Please sign in on the organizer page.'
+            : 'This account is not an organizer account. Please sign in on the participant page.',
+          code: 'WRONG_PORTAL',
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
+
+    applySetCookies(res, headers);
+    return response;
   }
 
   @Post('sign-out')

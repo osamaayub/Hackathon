@@ -117,6 +117,13 @@ export default function SignInPage() {
         {error && (
           <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
+            {/organizer page/i.test(error) && (
+              <p className="mt-2 text-xs font-semibold">
+                <Link href="/admin/sign-in" className="underline">
+                  Go to organizer sign in
+                </Link>
+              </p>
+            )}
             {/verif/i.test(error) && (
               <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                 <span className="opacity-80">Check your inbox for the verification link.</span>
@@ -142,6 +149,12 @@ export default function SignInPage() {
         New here?{' '}
         <Link href="/sign-up" className="font-medium text-primary hover:underline">
           Create an account
+        </Link>
+      </p>
+      <p className="mt-2 text-center text-xs text-muted-foreground">
+        Organizing an event?{' '}
+        <Link href="/admin/sign-in" className="font-medium text-foreground hover:underline">
+          Organizer sign in
         </Link>
       </p>
     </AuthShell>

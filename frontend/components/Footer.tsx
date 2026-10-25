@@ -26,6 +26,7 @@ const columns = [
       { href: '/sponsors', label: 'Sponsors' },
       { href: '/contact', label: 'Contact' },
       { href: '/sign-in', label: 'Sign in' },
+      { href: '/admin/sign-in', label: 'Organizer sign in' },
       { href: '/sign-up', label: 'Create account' },
     ],
   },

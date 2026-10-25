@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Code2, Rocket, Users } from 'lucide-react';
+import { CalendarCog, ClipboardCheck, Code2, Rocket, ShieldCheck, Users } from 'lucide-react';
 
 const perks = [
   { icon: Users, text: 'Form a team and build together' },
@@ -7,7 +7,15 @@ const perks = [
   { icon: Rocket, text: 'Ship before the countdown ends' },
 ];
 
-export function AuthShell({ children }: { children: ReactNode }) {
+const adminPerks = [
+  { icon: CalendarCog, text: 'Create events, schedules and tasks' },
+  { icon: Users, text: 'Watch teams form and make progress' },
+  { icon: ClipboardCheck, text: 'Review every project submission' },
+];
+
+export function AuthShell({ children, variant = 'participant' }: { children: ReactNode; variant?: 'participant' | 'admin' }) {
+  const admin = variant === 'admin';
+  const list = admin ? adminPerks : perks;
   return (
     <div className="grid min-h-[calc(100vh-61px)] lg:grid-cols-2">
       <aside className="dark relative hidden overflow-hidden bg-background text-foreground lg:block">
@@ -15,15 +23,28 @@ export function AuthShell({ children }: { children: ReactNode }) {
         <div className="animate-float absolute -top-20 -left-20 size-96 rounded-full bg-primary/30 blur-3xl" />
         <div className="animate-float absolute right-0 bottom-0 size-80 rounded-full bg-chart-2/20 blur-3xl [animation-delay:-4s]" />
         <div className="relative flex h-full flex-col justify-center px-14 py-16">
-          <p className="font-mono text-sm text-chart-3">$ hackathon --start</p>
+          <p className="flex items-center gap-2 font-mono text-sm text-chart-3">
+            {admin && <ShieldCheck className="size-4" />}
+            {admin ? '$ hackathon --organizer' : '$ hackathon --start'}
+          </p>
           <h2 className="mt-4 text-4xl font-semibold tracking-tight">
-            Where builders <span className="text-gradient">ship</span> ideas.
+            {admin ? (
+              <>
+                Run your event with <span className="text-gradient">confidence</span>.
+              </>
+            ) : (
+              <>
+                Where builders <span className="text-gradient">ship</span> ideas.
+              </>
+            )}
           </h2>
           <p className="mt-3 max-w-md text-muted-foreground">
-            Join hackathons, team up with great people, and turn a weekend into a launch.
+            {admin
+              ? 'The organizer portal is for people who create and manage hackathons.'
+              : 'Join hackathons, team up with great people, and turn a weekend into a launch.'}
           </p>
           <ul className="mt-10 space-y-4">
-            {perks.map(({ icon: Icon, text }) => (
+            {list.map(({ icon: Icon, text }) => (
               <li key={text} className="glass flex items-center gap-3 rounded-xl px-4 py-3 text-sm">
                 <span className="flex size-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
                   <Icon className="size-4" />
