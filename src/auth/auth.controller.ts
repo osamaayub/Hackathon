@@ -7,6 +7,8 @@ import { SignInDto } from './dto/sign-in.dto.js';
 import { RevokeSessionDto } from './dto/revoke-session.dto.js';
 import { UnlinkAccountDto } from './dto/unlink-account.dto.js';
 import { ResendVerificationDto } from './dto/resend-verification.dto.js';
+import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
+import { ResetPasswordDto } from './dto/reset-password.dto.js';
 
 function toHttpException(error: unknown, fallbackMessage: string): HttpException {
   if (error instanceof APIError) {
@@ -119,6 +121,33 @@ export class AuthController {
       return response;
     } catch (error) {
       throw toHttpException(error, 'Email verification failed');
+    }
+  }
+
+  // Always answers success, whether or not the email has an account, so it cannot be used to find out
+  // which addresses are registered.
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: ForgotPasswordDto) {
+    try {
+      const frontend = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/+$/, '');
+      await this.authService.instance.api.requestPasswordReset({
+        body: { email: body.email, redirectTo: `${frontend}/reset-password` },
+      });
+      return { success: true };
+    } catch (error) {
+      throw toHttpException(error, 'Could not start the password reset');
+    }
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() body: ResetPasswordDto) {
+    try {
+      await this.authService.instance.api.resetPassword({
+        body: { token: body.token, newPassword: body.newPassword },
+      });
+      return { success: true };
+    } catch (error) {
+      throw toHttpException(error, 'This reset link is invalid or has expired');
     }
   }
 

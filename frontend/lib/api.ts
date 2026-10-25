@@ -108,6 +108,15 @@ export const api = {
   updateProfile: (data: { name?: string }) =>
     request<User>('/users/me', { method: 'PATCH', body: JSON.stringify(data) }),
 
+  forgotPassword: (email: string) =>
+    request<{ success: boolean }>('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+
+  resetPassword: (token: string, newPassword: string) =>
+    request<{ success: boolean }>('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, newPassword }) }),
+
+  verifyEmail: (token: string) =>
+    request<{ status: boolean }>(`/auth/verify-email?token=${encodeURIComponent(token)}`),
+
   resendVerificationEmail: (email: string) =>
     request<{ success: boolean }>('/auth/send-verification-email', {
       method: 'POST',

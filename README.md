@@ -62,7 +62,7 @@ src/
 ├── task/                       # per-hackathon checklist + team completions
 └── schedule/                   # per-hackathon schedule items
 
-frontend/                       # Next.js UI (port 3001)
+frontend/                       # Next.js UI (port 3000)
 
 prisma/
 └── schema.prisma               # User, Session, Account, Verification, Hackathon, Team, TeamMember, Submission, Task, TaskCompletion, ScheduleItem
@@ -114,7 +114,7 @@ DIRECT_URL=postgres://<user>:<password>@<host>:5432/<db>?sslmode=require
 # Better Auth
 BETTER_AUTH_SECRET=<long-random-string>
 APP_BASE_URL=http://localhost:8080
-FRONTEND_URL=http://localhost:3001
+FRONTEND_URL=http://localhost:3000
 
 # Resend (transactional email)
 RESEND_API_KEY=<your-resend-key>
@@ -219,7 +219,7 @@ A Next.js app lives in `frontend/` and talks to this API.
 ```bash
 cd frontend
 npm install
-npm run dev     # http://localhost:3001
+npm run dev     # http://localhost:3000
 ```
 
 Set `NEXT_PUBLIC_API_URL` in `frontend/.env.local` (defaults to `http://localhost:8080`). The backend's `FRONTEND_URL` must match the frontend origin so CORS and auth cookies work. The UI supports light/dark mode via the navbar toggle.

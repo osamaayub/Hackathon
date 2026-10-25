@@ -28,7 +28,7 @@ async function createApp(): Promise<NestExpressApplication> {
   }
   app.enableCors({
     // Browsers send the origin without a trailing slash, so strip one if the setting has it.
-    origin: (process.env.FRONTEND_URL || 'http://localhost:3001').replace(/\/+$/, ''),
+    origin: (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/+$/, ''),
     credentials: true,
   });
   return app;
