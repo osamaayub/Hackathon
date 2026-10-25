@@ -129,9 +129,13 @@ ARCJET_ENV=development
 ARCJET_KEY=<your-arcjet-key>
 ARCJET_MODE=LIVE
 
-# NestJS Observe (optional — tracing/metrics/logging)
-OBSERVE_APP_KEY=<your-observe-app-key>
-OBSERVE_APP_SECRET=<your-observe-app-secret>
+# Caching (optional): without these the cache lives in server memory.
+# Use the REST values from the Upstash database page, not the rediss:// address.
+UPSTASH_REDIS_REST_URL=https://<name>.upstash.io
+UPSTASH_REDIS_REST_TOKEN=<your-rest-token>
+
+# Scheduled jobs (only needed on a serverless host such as Vercel)
+CRON_SECRET=<long-random-string>
 
 # Server
 PORT=8080
@@ -235,8 +239,8 @@ The project has two deployable parts.
 **Backend on Vercel (free, second project):** NestJS runs on Vercel with no extra code because the entry file is `src/main.ts`.
 
 1. In Vercel choose **Add New > Project**, import this repository again, name it `hackathon-backend`, and leave **Root Directory** empty (the repo root). Vercel detects NestJS on its own and runs the `build` script, which generates the Prisma client. Do not add a `vercel.json` at the repo root: the frontend project builds from the same repository and would pick it up.
-2. Add the environment variables from [`.env.example`](.env.example) before deploying: `DATABASE_URL`, `ARCJET_KEY`, `RESEND_API_KEY`, `BETTER_AUTH_SECRET`, `FRONTEND_URL`, `APP_BASE_URL`, `CONTACT_TO_EMAIL`, `NODE_ENV=production`, `ARCJET_ENV=production`, `TRUST_PROXY=1`. Do not set `PORT`.
-3. Deploy, then open `https://<project>.vercel.app/` and check that it answers.
+2. Add the environment variables from [`.env.example`](.env.example) before deploying: `DATABASE_URL`, `ARCJET_KEY`, `RESEND_API_KEY`, `BETTER_AUTH_SECRET`, `FRONTEND_URL`, `APP_BASE_URL`, `CONTACT_TO_EMAIL`, `NODE_ENV=production`, `ARCJET_ENV=production`, `TRUST_PROXY=1`. Also add `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` for Redis caching and `CRON_SECRET` for the scheduled jobs (see [Performance](#performance-caching-and-scheduled-jobs)). Do not set `PORT`. Vercel applies variables only to deployments made after you add them, so redeploy after changing any.
+3. Deploy, then open `https://<project>.vercel.app/` and check that it answers. `https://<project>.vercel.app/health` reports `"cache": "redis"` once Redis is connected (`"memory"` if it is not configured, `"redis-unreachable"` if it is configured but not answering).
 4. In the frontend project set `BACKEND_URL` to that URL and redeploy.
 
 If requests to the backend return a Vercel sign in page, switch off **Vercel Authentication** under the backend project's Settings > Deployment Protection.
@@ -279,7 +283,7 @@ It currently caches the **leaderboard** (`GET /leaderboard`, 5 minutes) and **pr
 | `warm-cache` | every 5 minutes | recomputes the leaderboard and projects so nobody waits for a cold cache |
 | `cleanup` | hourly | deletes expired sessions and one time tokens |
 
-On a normal server (local, Render, Railway) they run inside the app. A serverless host such as Vercel cannot keep timers alive, so the same jobs are exposed as `POST /cron/:job`, protected by `CRON_SECRET`, and [`.github/workflows/scheduled-jobs.yml`](.github/workflows/scheduled-jobs.yml) calls them. To enable that, create a long random value, set it as `CRON_SECRET` on the backend, and add the same value as a repository secret named `CRON_SECRET`. The backend address defaults to the live one in the workflow; a `BACKEND_URL` secret overrides it.
+On a normal server (local, Render, Railway) they run inside the app. A serverless host such as Vercel cannot keep timers alive, so the same jobs are exposed as `POST /cron/:job`, protected by `CRON_SECRET`, and [`.github/workflows/scheduled-jobs.yml`](.github/workflows/scheduled-jobs.yml) calls them. To enable that, create a long random value, set it as `CRON_SECRET` on the backend, and add the same value as a repository secret named `CRON_SECRET`. The backend address defaults to the live one in the workflow; a `BACKEND_URL` secret overrides it. While `CRON_SECRET` is missing or blank the endpoint answers `503 Scheduled jobs are not configured`; with the wrong value it answers `403`. To test it by hand: `curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://<backend>/cron/warm-cache`.
 
 ## Testing
 
@@ -289,9 +293,9 @@ yarn test:e2e     # e2e tests
 yarn test:cov     # coverage report
 ```
 
-## Observability (optional)
+## Observability
 
-The app is pre-instrumented with [NestJS Observe](https://observe.nestjs.com) for distributed tracing, metrics, logging, and error tracking. Create a free account, add an application, and set `OBSERVE_APP_KEY` / `OBSERVE_APP_SECRET` in `.env` to enable it — the app runs fine without them (telemetry simply no-ops).
+The app logs through Nest's built in logger, which Vercel and most hosts collect. `GET /health` reports the service status and which cache backend is active. NestJS Observe is not wired in.
 
 ## Notes on tooling directories
 
