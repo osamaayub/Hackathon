@@ -30,6 +30,7 @@ lerna-debug.log*
 *.launch
 .settings/
 *.sublime-workspace
+/scripts/
 
 # IDE - VSCode
 .vscode/*
@@ -48,6 +49,7 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+/dist
 
 # Runtime data
 pids

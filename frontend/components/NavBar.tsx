@@ -1,13 +1,15 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Trophy } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Logo } from '@/components/Logo';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 function initials(name: string | null, email: string) {
   const source = name?.trim() || email;
@@ -16,59 +18,124 @@ function initials(name: string | null, email: string) {
   return source.slice(0, 2).toUpperCase();
 }
 
-export function NavBar() {
-  const { user, loading, signOut } = useAuth();
-  const router = useRouter();
+const links = [
+  { href: '/hackathons', label: 'Hackathons' },
+  { href: '/projects', label: 'Projects' },
+  { href: '/leaderboard', label: 'Leaderboard' },
+  { href: '/resources', label: 'Resources' },
+  { href: '/about', label: 'About' },
+];
 
-  async function handleSignOut() {
-    await signOut();
-    router.push('/');
-  }
+export function NavBar() {
+  const { user, loading } = useAuth();
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Close the mobile menu after navigating.
+  useEffect(() => setMobileOpen(false), [pathname]);
+
+  const onProfile = pathname === '/profile';
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md supports-backdrop-filter:bg-background/60">
-      <nav className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3.5">
-        <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Trophy className="size-4" />
-          </span>
-          <span className="text-base">Hackathon</span>
-        </Link>
+    <header className="sticky top-0 z-40 px-3 pt-3 sm:px-6">
+      <nav
+        aria-label="Main"
+        className={`mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 rounded-full border bg-background/75 pr-2 pl-5 backdrop-blur-xl transition-shadow supports-backdrop-filter:bg-background/60 ${
+          scrolled ? 'shadow-lg shadow-black/10' : 'shadow-sm'
+        }`}
+      >
+        <div className="flex items-center gap-6">
+          <Link href="/" aria-label="Hackathon home">
+            <Logo />
+          </Link>
+          <div className="hidden items-center gap-0.5 md:flex">
+            {links.map((l) => {
+              const active = pathname === l.href || pathname.startsWith(`${l.href}/`);
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  aria-current={active ? 'page' : undefined}
+                  className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition hover:bg-muted hover:text-foreground ${
+                    active ? 'bg-muted text-foreground' : 'text-muted-foreground'
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          <ThemeToggle />
           {loading ? (
-            <Skeleton className="h-9 w-24 rounded-full" />
+            <Skeleton className="h-9 w-28 rounded-full" />
           ) : user ? (
-            <>
-              <Link href="/profile" className="hidden items-center gap-2 rounded-full py-1 pr-1 transition hover:opacity-80 sm:flex">
-                <Avatar className="size-8">
-                  <AvatarFallback className="bg-secondary text-xs font-medium">
-                    {initials(user.name, user.email)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-medium">{user.name || user.email}</span>
-                {user.role === 'ADMIN' && (
-                  <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
-                    Admin
-                  </Badge>
-                )}
-              </Link>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-                Sign out
-              </Button>
-            </>
+            <Link
+              href="/profile"
+              aria-label="Open your profile"
+              aria-current={onProfile ? 'page' : undefined}
+              className={`flex items-center gap-2 rounded-full border py-1 pr-3.5 pl-1 transition hover:bg-muted ${
+                onProfile ? 'border-primary/40 bg-primary/10' : 'bg-card'
+              }`}
+            >
+              <Avatar className="size-7">
+                <AvatarFallback className="bg-linear-to-br from-primary via-chart-4 to-chart-2 text-[11px] font-bold text-white">
+                  {initials(user.name, user.email)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="hidden max-w-28 truncate text-sm font-medium sm:block">{user.name || 'Profile'}</span>
+            </Link>
           ) : (
             <>
-              <Button variant="ghost" size="sm" asChild>
+              <Button variant="ghost" size="sm" asChild className="hidden rounded-full sm:inline-flex">
                 <Link href="/sign-in">Sign in</Link>
               </Button>
-              <Button size="sm" asChild>
-                <Link href="/sign-up">Sign up</Link>
+              <Button size="sm" asChild className="rounded-full px-4">
+                <Link href="/sign-up">Get started</Link>
               </Button>
             </>
           )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full md:hidden"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((v) => !v)}
+          >
+            {mobileOpen ? <X /> : <Menu />}
+          </Button>
         </div>
       </nav>
+
+      {mobileOpen && (
+        <div className="mx-auto mt-2 max-w-5xl rounded-2xl border bg-background/95 p-2 shadow-lg backdrop-blur-xl md:hidden">
+          {links.map((l) => (
+            <Link key={l.href} href={l.href} onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 text-sm font-medium hover:bg-muted">
+              {l.label}
+            </Link>
+          ))}
+          {user ? (
+            <Link href="/profile" onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 text-sm font-medium hover:bg-muted">
+              Profile
+            </Link>
+          ) : (
+            <Link href="/sign-in" onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 text-sm font-medium hover:bg-muted">
+              Sign in
+            </Link>
+          )}
+        </div>
+      )}
     </header>
   );
 }

@@ -14,6 +14,7 @@ import { TeamModule } from './team/team.module.js';
 import { SubmissionModule } from './submission/submission.module.js';
 import { TaskModule } from './task/task.module.js';
 import { ScheduleModule } from './schedule/schedule.module.js';
+import { ContactModule } from './contact/contact.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule({
   // The Arcjet client is a frozen object; Observe's proxy breaks its
@@ -47,6 +48,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule({
     SubmissionModule,
     TaskModule,
     ScheduleModule,
+    ContactModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ArcjetGuard }],
