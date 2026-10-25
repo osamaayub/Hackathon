@@ -56,6 +56,8 @@ export class TaskService {
       throw new NotFoundException('Hackathon not found');
     }
 
+    await this.assertTitleFree(hackathonId, dto.title);
+
     const order = await this.prisma.client.task.count({ where: { hackathonId } });
 
     return this.prisma.client.task.create({
@@ -63,7 +65,26 @@ export class TaskService {
     });
   }
 
+  /** Throws if the hackathon already has a task with this title (case insensitive). */
+  private async assertTitleFree(hackathonId: string, title: string, exceptId?: string) {
+    const clash = await this.prisma.client.task.findFirst({
+      where: { hackathonId, title: { equals: title.trim(), mode: 'insensitive' }, ...(exceptId && { id: { not: exceptId } }) },
+      select: { id: true },
+    });
+    if (clash) {
+      throw new ConflictException('This hackathon already has a task with that title');
+    }
+  }
+
   async update(taskId: string, dto: UpdateTaskDto) {
+    if (dto.title !== undefined) {
+      const existing = await this.prisma.client.task.findUnique({ where: { id: taskId }, select: { hackathonId: true } });
+      if (!existing) {
+        throw new NotFoundException('Task not found');
+      }
+      await this.assertTitleFree(existing.hackathonId, dto.title, taskId);
+    }
+
     try {
       return await this.prisma.client.task.update({
         where: { id: taskId },

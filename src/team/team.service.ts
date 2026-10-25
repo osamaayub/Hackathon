@@ -75,6 +75,15 @@ export class TeamService {
         }
       }
 
+      // The database only blocks an exact match, so "Team Alpha" and "team alpha" need this check.
+      const sameName = await tx.team.findFirst({
+        where: { hackathonId: hackathon.id, name: { equals: dto.name.trim(), mode: 'insensitive' } },
+        select: { id: true },
+      });
+      if (sameName) {
+        throw new ConflictException('A team with this name already exists for this hackathon');
+      }
+
       try {
         return await tx.team.create({
           data: {

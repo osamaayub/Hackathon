@@ -10,7 +10,7 @@ function uniqueViolation(constraint: string) {
 }
 
 function makeFakeClient() {
-  const task = { findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() };
+  const task = { findUnique: vi.fn(), findFirst: vi.fn().mockResolvedValue(null), findMany: vi.fn(), count: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() };
   const teamMember = { findUnique: vi.fn() };
   const taskCompletion = { create: vi.fn(), delete: vi.fn() };
   const hackathon = { findUnique: vi.fn() };
@@ -31,6 +31,21 @@ describe('TaskService', () => {
         data: { hackathonId: 'h1', title: 'Submit idea', description: undefined, order: 3 },
       });
       expect(result.order).toBe(3);
+    });
+  });
+
+  describe('create (duplicates)', () => {
+    it('rejects a task whose title already exists in the hackathon, ignoring case', async () => {
+      const { client, hackathon, task } = makeFakeClient();
+      hackathon.findUnique.mockResolvedValue({ id: 'h1' });
+      task.findFirst.mockResolvedValue({ id: 'existing' });
+
+      const service = new TaskService({ client } as any);
+      await expect(service.create('h1', { title: '  submit IDEA ' })).rejects.toBeInstanceOf(ConflictException);
+      expect(task.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ hackathonId: 'h1', title: { equals: 'submit IDEA', mode: 'insensitive' } }) }),
+      );
+      expect(task.create).not.toHaveBeenCalled();
     });
   });
 
