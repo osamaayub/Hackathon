@@ -65,7 +65,19 @@ export class HackathonService {
     return hackathon;
   }
 
-  create(dto: CreateHackathonDto) {
+  /** Throws if another hackathon already uses this title (case insensitive). */
+  private async assertTitleFree(title: string, exceptId?: string) {
+    const clash = await this.prisma.client.hackathon.findFirst({
+      where: { title: { equals: title.trim(), mode: 'insensitive' }, ...(exceptId && { id: { not: exceptId } }) },
+      select: { id: true },
+    });
+    if (clash) {
+      throw new ConflictException('A hackathon with this title already exists');
+    }
+  }
+
+  async create(dto: CreateHackathonDto) {
+    await this.assertTitleFree(dto.title);
     return this.prisma.client.hackathon.create({
       data: {
         title: dto.title,
@@ -86,6 +98,10 @@ export class HackathonService {
     });
     if (!current) {
       throw new NotFoundException('Hackathon not found');
+    }
+
+    if (dto.title !== undefined && dto.title.trim().toLowerCase() !== current.title.trim().toLowerCase()) {
+      await this.assertTitleFree(dto.title, id);
     }
 
     if (dto.status && dto.status !== current.status) {
