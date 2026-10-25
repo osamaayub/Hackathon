@@ -266,6 +266,21 @@ The free plan sleeps after about 15 minutes without traffic, so the first reques
 
 With `BACKEND_URL` set, the browser calls `/backend/...` on the Vercel site and Next.js forwards it to the API. That keeps the sign in cookie first party, so it works even in browsers that block third party cookies. Without `BACKEND_URL` the app calls `NEXT_PUBLIC_API_URL` directly, which is what local development uses.
 
+## Performance: caching and scheduled jobs
+
+**Cache.** `src/lib/cache` is a small cache with a time to live. Set `REDIS_URL` (any Redis, for example a free Upstash database) to use Redis, or leave it empty to cache in each server's memory. A Redis error never breaks a request: that call is served from memory instead. Open `/health` to see which one is active (`"cache": "redis"` or `"memory"`).
+
+It currently caches the **leaderboard** (`GET /leaderboard`, 5 minutes) and **projects** (`GET /projects`, 2 minutes), which the website used to assemble from about twenty requests. A new submission clears both immediately.
+
+**Scheduled jobs.**
+
+| Job | Schedule | What it does |
+| --- | --- | --- |
+| `warm-cache` | every 5 minutes | recomputes the leaderboard and projects so nobody waits for a cold cache |
+| `cleanup` | hourly | deletes expired sessions and one time tokens |
+
+On a normal server (local, Render, Railway) they run inside the app. A serverless host such as Vercel cannot keep timers alive, so the same jobs are exposed as `POST /cron/:job`, protected by `CRON_SECRET`, and [`.github/workflows/scheduled-jobs.yml`](.github/workflows/scheduled-jobs.yml) calls them. To enable that, add the repository secrets `BACKEND_URL` and `CRON_SECRET`, and set the same `CRON_SECRET` on the backend.
+
 ## Testing
 
 ```bash

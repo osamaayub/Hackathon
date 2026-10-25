@@ -1,11 +1,15 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../lib/database/prisma.service.js';
+import { CacheService } from '../lib/cache/cache.service.js';
 import { parsePagination, toPaginated } from '../common/pagination.js';
 import { UpsertSubmissionDto } from './dto/upsert-submission.dto.js';
 
 @Injectable()
 export class SubmissionService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CacheService) private readonly cache: CacheService,
+  ) {}
 
   async getByTeam(teamId: string) {
     const team = await this.prisma.client.team.findUnique({ where: { id: teamId } });
@@ -35,11 +39,13 @@ export class SubmissionService {
       throw new ConflictException('The submission deadline for this hackathon has passed');
     }
 
-    return this.prisma.client.submission.upsert({
+    const saved = await this.prisma.client.submission.upsert({
       where: { teamId },
       create: { teamId, link: dto.link, description: dto.description },
       update: { link: dto.link, description: dto.description },
     });
+    await this.cache.del('leaderboard', 'projects');
+    return saved;
   }
 
   async listByHackathon(hackathonId: string, requesterRole: string, page?: string, pageSize?: string) {

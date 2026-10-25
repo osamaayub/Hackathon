@@ -305,7 +305,7 @@ export function HackathonDetailClient({ id }: { id: string }) {
                           <div className="flex flex-wrap items-center gap-2">
                             <h3 className="truncate text-lg font-bold tracking-tight">{team.name}</h3>
                             {membership && (
-                              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary uppercase">Your team</span>
+                              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[0.625rem] font-bold text-primary uppercase">Your team</span>
                             )}
                           </div>
                           <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
@@ -337,18 +337,18 @@ export function HackathonDetailClient({ id }: { id: string }) {
                           {shown.map((m) => (
                             <li key={m.id} className="flex items-center gap-2.5">
                               <Avatar className="size-8">
-                                <AvatarFallback className="bg-secondary text-[11px] font-semibold">{initials(m.user.name, m.user.email)}</AvatarFallback>
+                                <AvatarFallback className="bg-secondary text-[0.6875rem] font-semibold">{initials(m.user.name, m.user.email)}</AvatarFallback>
                               </Avatar>
                               <span className="min-w-0 flex-1 truncate text-sm font-medium">
                                 {m.user.name || m.user.email}
                                 {m.userId === user?.id && <span className="ml-1.5 text-xs font-normal text-muted-foreground">(you)</span>}
                               </span>
                               {m.role === 'LEADER' ? (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 uppercase dark:text-amber-400">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 text-[0.625rem] font-bold text-amber-600 uppercase dark:text-amber-400">
                                   <Crown className="size-3" /> Leader
                                 </span>
                               ) : (
-                                <span className="text-[10px] font-semibold text-muted-foreground uppercase">Member</span>
+                                <span className="text-[0.625rem] font-semibold text-muted-foreground uppercase">Member</span>
                               )}
                             </li>
                           ))}

@@ -19,7 +19,7 @@ function Unit({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex flex-col items-center">
       <span className="text-2xl font-semibold tabular-nums">{String(value).padStart(2, '0')}</span>
-      <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="text-[0.6875rem] uppercase tracking-wide text-muted-foreground">{label}</span>
     </div>
   );
 }

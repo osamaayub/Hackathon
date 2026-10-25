@@ -19,6 +19,12 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard)
+  @Get('me/activity')
+  activity(@Req() req: AuthedRequest) {
+    return this.userService.activity(req.user.id);
+  }
+
+  @UseGuards(AuthGuard)
   @Patch('me')
   updateMe(@Req() req: AuthedRequest, @Body() body: UpdateProfileDto) {
     return this.userService.updateProfile(req.user.id, body);

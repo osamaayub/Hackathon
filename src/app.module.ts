@@ -14,11 +14,17 @@ import { SubmissionModule } from './submission/submission.module.js';
 import { TaskModule } from './task/task.module.js';
 import { ScheduleModule } from './schedule/schedule.module.js';
 import { ContactModule } from './contact/contact.module.js';
+import { ScheduleModule as CronScheduleModule } from '@nestjs/schedule';
+import { CacheModule } from './lib/cache/cache.module.js';
+import { CommunityModule } from './community/community.module.js';
+import { CronModule } from './cron/cron.module.js';
 
 @Module({
   imports: [
+    CronScheduleModule.forRoot(),
     ArcjetModule,
     PrismaModule,
+    CacheModule,
     MailModule,
     AuthModule,
     UserModule,
@@ -28,6 +34,8 @@ import { ContactModule } from './contact/contact.module.js';
     TaskModule,
     ScheduleModule,
     ContactModule,
+    CommunityModule,
+    CronModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ArcjetGuard }],

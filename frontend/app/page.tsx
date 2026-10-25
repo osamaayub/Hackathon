@@ -57,7 +57,7 @@ function ProductPreview() {
           <span className="size-2.5 rounded-full bg-red-400/80" />
           <span className="size-2.5 rounded-full bg-amber-400/80" />
           <span className="size-2.5 rounded-full bg-emerald-400/80" />
-          <span className="ml-3 rounded-md bg-white/5 px-3 py-0.5 text-[11px] text-muted-foreground">hackathon.app/build-a-thon-2026</span>
+          <span className="ml-3 rounded-md bg-white/5 px-3 py-0.5 text-[0.6875rem] text-muted-foreground">hackathon.app/build-a-thon-2026</span>
         </div>
         <div className="grid gap-5 p-5 sm:grid-cols-5 sm:p-6">
           <div className="sm:col-span-3">
@@ -67,7 +67,7 @@ function ProductPreview() {
               {[['02', 'Days'], ['14', 'Hours'], ['33', 'Min'], ['08', 'Sec']].map(([v, l]) => (
                 <div key={l} className="rounded-lg border border-white/10 bg-white/5 py-2 text-center">
                   <div className="text-lg font-bold tabular-nums">{v}</div>
-                  <div className="text-[10px] tracking-wide text-muted-foreground uppercase">{l}</div>
+                  <div className="text-[0.625rem] tracking-wide text-muted-foreground uppercase">{l}</div>
                 </div>
               ))}
             </div>
@@ -75,12 +75,12 @@ function ProductPreview() {
               {['AK', 'BR', 'CW', 'DO'].map((i, n) => (
                 <span
                   key={i}
-                  className={`grid size-7 place-items-center rounded-full border-2 border-card text-[10px] font-bold text-white ${['bg-primary', 'bg-chart-4', 'bg-chart-2', 'bg-chart-3'][n]}`}
+                  className={`grid size-7 place-items-center rounded-full border-2 border-card text-[0.625rem] font-bold text-white ${['bg-primary', 'bg-chart-4', 'bg-chart-2', 'bg-chart-3'][n]}`}
                 >
                   {i}
                 </span>
               ))}
-              <span className="grid size-7 place-items-center rounded-full border-2 border-card bg-muted text-[10px] font-semibold text-muted-foreground">+8</span>
+              <span className="grid size-7 place-items-center rounded-full border-2 border-card bg-muted text-[0.625rem] font-semibold text-muted-foreground">+8</span>
             </div>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:col-span-2">
@@ -150,7 +150,7 @@ export default function HomePage() {
         <div className="absolute inset-x-0 top-0 -z-10 h-[32rem] bg-[radial-gradient(60%_60%_at_50%_0%,color-mix(in_oklch,var(--primary)_45%,transparent),transparent)]" />
         <div className="mx-auto flex max-w-5xl flex-col items-center px-6 pt-24 pb-20 text-center sm:pt-32">
           <span className="animate-rise inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 py-1 pr-3 pl-1 text-xs font-medium text-foreground/80">
-            <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground uppercase">New</span>
+            <span className="rounded-full bg-primary px-2 py-0.5 text-[0.625rem] font-bold text-primary-foreground uppercase">New</span>
             Teams, tasks and submissions in one place
           </span>
           <h1 className="animate-rise mt-6 text-5xl leading-[1.05] font-extrabold tracking-tight [animation-delay:80ms] sm:text-7xl">

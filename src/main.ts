@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module.js';
+import { corsOrigin } from './common/allowed-origins.js';
 
 // Load .env into process.env (Node built-in, no dotenv needed)
 try {
@@ -27,8 +28,7 @@ async function createApp(): Promise<NestExpressApplication> {
     app.set('trust proxy', Number(process.env.TRUST_PROXY) || 1);
   }
   app.enableCors({
-    // Browsers send the origin without a trailing slash, so strip one if the setting has it.
-    origin: (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/+$/, ''),
+    origin: corsOrigin,
     credentials: true,
   });
   return app;

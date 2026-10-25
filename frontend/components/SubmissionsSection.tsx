@@ -125,11 +125,11 @@ export function SubmissionsSection({
             <div className="flex items-center justify-between gap-2">
               <h3 className="font-bold">Your team&apos;s submission</h3>
               {mine ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-chart-3/15 px-2.5 py-0.5 text-[11px] font-bold text-chart-3 uppercase">
+                <span className="inline-flex items-center gap-1 rounded-full bg-chart-3/15 px-2.5 py-0.5 text-[0.6875rem] font-bold text-chart-3 uppercase">
                   <CheckCircle2 className="size-3" /> Submitted
                 </span>
               ) : (
-                <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-bold text-muted-foreground uppercase">
+                <span className="rounded-full bg-muted px-2.5 py-0.5 text-[0.6875rem] font-bold text-muted-foreground uppercase">
                   Not submitted
                 </span>
               )}
@@ -257,7 +257,7 @@ export function SubmissionsSection({
                         <div className="min-w-0">
                           <h3 className="flex items-center gap-2 truncate font-bold">
                             {s.teamName}
-                            {isMine && <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary uppercase">You</span>}
+                            {isMine && <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[0.625rem] font-bold text-primary uppercase">You</span>}
                           </h3>
                           <p className="truncate text-xs text-muted-foreground">{hostOf(sub.link)}</p>
                         </div>

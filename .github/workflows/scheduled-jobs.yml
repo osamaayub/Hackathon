@@ -1,0 +1,55 @@
+name: Scheduled jobs
+
+# A serverless host such as Vercel cannot keep timers running, so this workflow plays the part of cron:
+# it calls the backend's secured POST /cron/:job endpoint on a schedule.
+#
+# Set these two repository secrets (Settings > Secrets and variables > Actions):
+#   BACKEND_URL  the backend's public address, for example https://hackathon-backend-seven-eta.vercel.app
+#   CRON_SECRET  the same value as the backend's CRON_SECRET setting
+#
+# GitHub only runs scheduled workflows from the default branch, and may start them a few minutes late.
+
+on:
+  schedule:
+    - cron: '*/5 * * * *' # keep the leaderboard and projects cache warm
+    - cron: '17 * * * *' # hourly cleanup of expired sessions and tokens
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Job to run now
+        required: true
+        default: warm-cache
+        type: choice
+        options:
+          - warm-cache
+          - cleanup
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Call the backend
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SCHEDULE: ${{ github.event.schedule }}
+          MANUAL_JOB: ${{ inputs.job }}
+        run: |
+          if [ -z "$BACKEND_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::notice::BACKEND_URL and CRON_SECRET are not set yet, so nothing was called."
+            exit 0
+          fi
+
+          if [ -n "$MANUAL_JOB" ]; then
+            JOB="$MANUAL_JOB"
+          elif [ "$SCHEDULE" = "17 * * * *" ]; then
+            JOB="cleanup"
+          else
+            JOB="warm-cache"
+          fi
+
+          echo "Running job: $JOB"
+          curl --fail-with-body --silent --show-error --retry 2 --retry-delay 5 --max-time 90 \
+            -X POST -H "Authorization: Bearer $CRON_SECRET" "${BACKEND_URL%/}/cron/$JOB"
+          echo

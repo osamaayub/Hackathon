@@ -1,4 +1,5 @@
 import { betterAuth } from 'better-auth';
+import { allowedOrigins, primaryFrontendUrl } from '../../common/allowed-origins.js';
 import { prismaAdapter } from '@better-auth/prisma-adapter';
 import { PrismaService } from '../database/prisma.service.js';
 import { MailService } from '../mail/mail.service.js';
@@ -17,7 +18,7 @@ export const createBetterAuth = (prisma: PrismaService, mail: MailService) => {
     // mount), so basePath must match that prefix or links better-auth generates itself
     // (the verification email URL) would point at a route that doesn't exist.
     basePath: '/auth',
-    trustedOrigins: [(process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/+$/, '')],
+    trustedOrigins: allowedOrigins(),
     database: prismaAdapter(prisma.client, {
       provider: 'postgresql',
     }),
@@ -28,7 +29,7 @@ export const createBetterAuth = (prisma: PrismaService, mail: MailService) => {
       revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, token }) => {
         // The link goes straight to the frontend page, which posts the token back to /auth/reset-password.
-        const frontend = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/+$/, '');
+        const frontend = primaryFrontendUrl();
         await mail.sendPasswordResetEmail(user.email, `${frontend}/reset-password?token=${encodeURIComponent(token)}`);
       },
     },
@@ -38,7 +39,7 @@ export const createBetterAuth = (prisma: PrismaService, mail: MailService) => {
       sendVerificationEmail: async ({ user, token }) => {
         // Link to the frontend page, which calls GET /auth/verify-email with the token and then
         // signs the user in. (Better Auth's own `url` would open raw JSON from the API.)
-        const frontend = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/+$/, '');
+        const frontend = primaryFrontendUrl();
         await mail.sendVerificationEmail(user.email, `${frontend}/verify-email?token=${encodeURIComponent(token)}`);
       },
     },

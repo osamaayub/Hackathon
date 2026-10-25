@@ -15,7 +15,7 @@ describe('SubmissionService', () => {
       team.findUnique.mockResolvedValue({ id: 't1', hackathon: { endDate: new Date('2099-01-01') } });
       teamMember.findUnique.mockResolvedValue(null);
 
-      const service = new SubmissionService({ client } as any);
+      const service = new SubmissionService({ client } as any, { del: vi.fn() } as any);
       await expect(service.upsert('t1', 'u1', { link: 'https://x.dev' })).rejects.toThrow(ForbiddenException);
     });
 
@@ -24,7 +24,7 @@ describe('SubmissionService', () => {
       team.findUnique.mockResolvedValue({ id: 't1', hackathon: { endDate: new Date('2000-01-01') } });
       teamMember.findUnique.mockResolvedValue({ id: 'm1' });
 
-      const service = new SubmissionService({ client } as any);
+      const service = new SubmissionService({ client } as any, { del: vi.fn() } as any);
       await expect(service.upsert('t1', 'u1', { link: 'https://x.dev' })).rejects.toThrow(ConflictException);
     });
 
@@ -34,7 +34,7 @@ describe('SubmissionService', () => {
       teamMember.findUnique.mockResolvedValue({ id: 'm1' });
       submission.upsert.mockResolvedValue({ teamId: 't1', link: 'https://x.dev' });
 
-      const service = new SubmissionService({ client } as any);
+      const service = new SubmissionService({ client } as any, { del: vi.fn() } as any);
       const result = await service.upsert('t1', 'u1', { link: 'https://x.dev' });
       expect(result.link).toBe('https://x.dev');
     });
@@ -45,7 +45,7 @@ describe('SubmissionService', () => {
       const { client, team } = makeFakeClient();
       team.findUnique.mockResolvedValue(null);
 
-      const service = new SubmissionService({ client } as any);
+      const service = new SubmissionService({ client } as any, { del: vi.fn() } as any);
       await expect(service.getByTeam('missing')).rejects.toThrow(NotFoundException);
     });
   });
