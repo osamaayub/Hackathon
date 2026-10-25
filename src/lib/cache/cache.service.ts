@@ -1,7 +1,10 @@
-import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import type { Redis } from 'ioredis';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import type { Redis } from '@upstash/redis';
 
 export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
+
+/** How long to wait for Redis before giving up on one call and using memory instead. */
+const REDIS_TIMEOUT_MS = 1_500;
 
 interface MemoryEntry {
   value: string;
@@ -9,12 +12,12 @@ interface MemoryEntry {
 }
 
 /**
- * Key value cache with a TTL. Uses Redis when REDIS_URL is set and falls back to process memory otherwise.
- * It is deliberately forgiving: a Redis error is logged and that call is served from memory, so a cache
- * outage can slow things down but never break a request.
+ * Key value cache with a TTL. Uses Upstash Redis (over HTTPS) when it is configured and falls back to process
+ * memory otherwise. It is deliberately forgiving: a Redis error or a slow answer is logged and that call is
+ * served from memory, so a cache outage can slow things down but never break a request.
  */
 @Injectable()
-export class CacheService implements OnModuleDestroy {
+export class CacheService {
   private readonly logger = new Logger(CacheService.name);
   private readonly memory = new Map<string, MemoryEntry>();
   private readonly inFlight = new Map<string, Promise<unknown>>();
@@ -23,7 +26,7 @@ export class CacheService implements OnModuleDestroy {
 
   constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis | null) {}
 
-  /** Which backend is serving the cache, for health checks and logs. */
+  /** Which backend is configured, for logs. */
   get backend(): 'redis' | 'memory' {
     return this.redis ? 'redis' : 'memory';
   }
@@ -32,8 +35,9 @@ export class CacheService implements OnModuleDestroy {
   async status(): Promise<'redis' | 'redis-unreachable' | 'memory'> {
     if (!this.redis) return 'memory';
     try {
-      return (await this.redis.ping()) === 'PONG' ? 'redis' : 'redis-unreachable';
-    } catch {
+      return (await this.withTimeout(this.redis.ping())) === 'PONG' ? 'redis' : 'redis-unreachable';
+    } catch (error) {
+      this.noteRedisError(error);
       return 'redis-unreachable';
     }
   }
@@ -57,7 +61,7 @@ export class CacheService implements OnModuleDestroy {
     for (const k of full) this.memory.delete(k);
     if (!this.redis || full.length === 0) return;
     try {
-      await this.redis.del(...full);
+      await this.withTimeout(this.redis.del(...full));
     } catch (error) {
       this.noteRedisError(error);
     }
@@ -87,20 +91,20 @@ export class CacheService implements OnModuleDestroy {
     return load;
   }
 
-  async onModuleDestroy() {
-    if (this.redis) {
-      await this.redis.quit().catch(() => undefined);
-    }
-  }
-
   private async read(key: string): Promise<string | null> {
     if (this.redis) {
       try {
-        return await this.redis.get(key);
+        const value = await this.withTimeout(this.redis.get<string>(key));
+        if (value !== null && value !== undefined) return typeof value === 'string' ? value : JSON.stringify(value);
+        return this.readMemory(key); // not in Redis: a value written during an outage may still be in memory
       } catch (error) {
         this.noteRedisError(error);
       }
     }
+    return this.readMemory(key);
+  }
+
+  private readMemory(key: string): string | null {
     const entry = this.memory.get(key);
     if (!entry) return null;
     if (entry.expiresAt <= Date.now()) {
@@ -113,7 +117,8 @@ export class CacheService implements OnModuleDestroy {
   private async write(key: string, value: string, ttlSeconds: number): Promise<void> {
     if (this.redis) {
       try {
-        await this.redis.set(key, value, 'EX', Math.max(1, Math.floor(ttlSeconds)));
+        await this.withTimeout(this.redis.set(key, value, { ex: Math.max(1, Math.floor(ttlSeconds)) }));
+        this.memory.delete(key);
         return;
       } catch (error) {
         this.noteRedisError(error);
@@ -121,6 +126,14 @@ export class CacheService implements OnModuleDestroy {
     }
     this.memory.set(key, { value, expiresAt: Date.now() + ttlSeconds * 1000 });
     this.trimMemory();
+  }
+
+  private withTimeout<T>(promise: Promise<T>): Promise<T> {
+    let timer: NodeJS.Timeout | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`Redis did not answer within ${REDIS_TIMEOUT_MS}ms`)), REDIS_TIMEOUT_MS);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
   }
 
   /** Keeps the fallback cache from growing without bound. */
