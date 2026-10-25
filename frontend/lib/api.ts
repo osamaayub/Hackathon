@@ -84,6 +84,9 @@ export const api = {
   signIn: (data: { email: string; password: string }) =>
     request('/auth/sign-in', { method: 'POST', body: JSON.stringify(data) }),
 
+  adminSignIn: (data: { email: string; password: string }) =>
+    request('/auth/admin/sign-in', { method: 'POST', body: JSON.stringify(data) }),
+
   signOut: () => request('/auth/sign-out', { method: 'POST' }),
 
   getSession: () => request<SessionResponse | null>('/auth/session', { method: 'POST' }),

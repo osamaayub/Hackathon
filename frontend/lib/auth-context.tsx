@@ -7,7 +7,7 @@ import type { User } from './types';
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string, portal?: 'participant' | 'admin') => Promise<void>;
   signUp: (email: string, password: string, name?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -27,8 +27,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refresh().finally(() => setLoading(false));
   }, []);
 
-  async function signIn(email: string, password: string) {
-    await api.signIn({ email, password });
+  async function signIn(email: string, password: string, portal: 'participant' | 'admin' = 'participant') {
+    await (portal === 'admin' ? api.adminSignIn({ email, password }) : api.signIn({ email, password }));
     await refresh();
   }
 
