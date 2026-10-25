@@ -137,6 +137,12 @@ export default function SignUpPage() {
           Sign in
         </Link>
       </p>
+      <p className="mt-2 text-center text-xs text-muted-foreground">
+        Organizing an event?{' '}
+        <Link href="/admin/sign-up" className="font-medium text-foreground hover:underline">
+          Organizer sign up
+        </Link>
+      </p>
     </AuthShell>
   );
 }
