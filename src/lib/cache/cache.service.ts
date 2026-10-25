@@ -31,6 +31,7 @@ export class CacheService implements OnModuleDestroy {
   /** Checks the real connection, so a health check can tell "Redis is configured" from "Redis is working". */
   async status(): Promise<'redis' | 'redis-unreachable' | 'memory'> {
     if (!this.redis) return 'memory';
+    if (!(await this.ensureReady())) return 'redis-unreachable';
     try {
       return (await this.redis.ping()) === 'PONG' ? 'redis' : 'redis-unreachable';
     } catch {
@@ -55,7 +56,7 @@ export class CacheService implements OnModuleDestroy {
   async del(...keys: string[]): Promise<void> {
     const full = keys.map((k) => this.prefix + k);
     for (const k of full) this.memory.delete(k);
-    if (!this.redis || full.length === 0) return;
+    if (!this.redis || full.length === 0 || !(await this.ensureReady())) return;
     try {
       await this.redis.del(...full);
     } catch (error) {
@@ -94,7 +95,7 @@ export class CacheService implements OnModuleDestroy {
   }
 
   private async read(key: string): Promise<string | null> {
-    if (this.redis) {
+    if (this.redis && (await this.ensureReady())) {
       try {
         return await this.redis.get(key);
       } catch (error) {
@@ -111,7 +112,7 @@ export class CacheService implements OnModuleDestroy {
   }
 
   private async write(key: string, value: string, ttlSeconds: number): Promise<void> {
-    if (this.redis) {
+    if (this.redis && (await this.ensureReady())) {
       try {
         await this.redis.set(key, value, 'EX', Math.max(1, Math.floor(ttlSeconds)));
         return;
@@ -121,6 +122,33 @@ export class CacheService implements OnModuleDestroy {
     }
     this.memory.set(key, { value, expiresAt: Date.now() + ttlSeconds * 1000 });
     this.trimMemory();
+  }
+
+  /**
+   * True once the Redis connection is usable. A freshly started (for example serverless) instance sends its
+   * first command before the connection has finished opening, and the client is set to fail fast rather than
+   * queue, so wait briefly for it. If it is down, or does not open in time, callers use the memory cache.
+   */
+  private async ensureReady(): Promise<boolean> {
+    const redis = this.redis;
+    if (!redis) return false;
+    const status = (redis as { status?: string }).status;
+    if (!status || status === 'ready') return true;
+    if (status !== 'connecting' && status !== 'connect' && status !== 'wait') return false; // reconnecting or ended
+
+    return new Promise<boolean>((resolve) => {
+      const finish = (ok: boolean) => {
+        clearTimeout(timer);
+        redis.off('ready', onReady);
+        redis.off('end', onEnd);
+        resolve(ok);
+      };
+      const onReady = () => finish(true);
+      const onEnd = () => finish(false);
+      const timer = setTimeout(() => finish(false), 2_500);
+      redis.once('ready', onReady);
+      redis.once('end', onEnd);
+    });
   }
 
   /** Keeps the fallback cache from growing without bound. */

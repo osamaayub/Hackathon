@@ -78,6 +78,38 @@ describe('CacheService (Redis)', () => {
     expect(await new CacheService(down).status()).toBe('redis-unreachable');
   });
 
+  it('waits for a connection that is still opening instead of failing the first call', async () => {
+    const { EventEmitter } = await import('node:events');
+    const redis = Object.assign(new EventEmitter(), {
+      status: 'connecting',
+      store: new Map<string, string>(),
+      get(key: string) { return Promise.resolve(this.store.get(key) ?? null); },
+      set(key: string, value: string) { this.store.set(key, value); return Promise.resolve('OK'); },
+      ping: () => Promise.resolve('PONG'),
+    }) as any;
+    const cache = new CacheService(redis);
+
+    setTimeout(() => {
+      redis.status = 'ready';
+      redis.emit('ready');
+    }, 30);
+
+    await cache.set('k', 'v', 60); // issued while "connecting"
+    expect(redis.store.get('hackathon:k')).toBe('"v"'); // it went to Redis, not to memory
+    expect(await cache.status()).toBe('redis');
+  });
+
+  it('does not wait on a connection that is down', async () => {
+    const { EventEmitter } = await import('node:events');
+    const redis = Object.assign(new EventEmitter(), { status: 'reconnecting', get: vi.fn(), set: vi.fn() }) as any;
+    const cache = new CacheService(redis);
+    const started = Date.now();
+    await cache.set('k', 'v', 60);
+    expect(Date.now() - started).toBeLessThan(200);
+    expect(redis.set).not.toHaveBeenCalled();
+    expect(await cache.get('k')).toBe('v'); // memory copy
+  });
+
   it('falls back to memory instead of throwing when Redis fails', async () => {
     const broken = {
       get: vi.fn().mockRejectedValue(new Error('connection refused')),
