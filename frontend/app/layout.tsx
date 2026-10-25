@@ -56,7 +56,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   // Open the API connection (with credentials, for the session cookie) before the first fetch.
-  preconnect(API_URL, { crossOrigin: "use-credentials" });
+  // A relative API URL (the "/backend" proxy) is same origin, so there is nothing to preconnect to.
+  if (API_URL.startsWith("http")) preconnect(API_URL, { crossOrigin: "use-credentials" });
 
   return (
     <html
