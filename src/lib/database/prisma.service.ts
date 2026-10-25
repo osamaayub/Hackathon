@@ -20,7 +20,20 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    await this.prisma.$connect();
+    // Fail loudly instead of hanging: on serverless hosts a stuck connection would otherwise
+    // keep every request waiting until the platform kills the function.
+    let timer: NodeJS.Timeout | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error('Timed out after 20s connecting to the database. Check DATABASE_URL and network access.')),
+        20_000,
+      );
+    });
+    try {
+      await Promise.race([this.prisma.$connect(), timeout]);
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   async onModuleDestroy() {

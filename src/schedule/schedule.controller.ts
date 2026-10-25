@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards, Inject } from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthGuard } from '../common/guards/auth.guard.js';
 import { AdminGuard } from '../common/guards/admin.guard.js';
@@ -11,7 +11,7 @@ type AuthedRequest = Request & { user: { id: string; role: string } };
 @UseGuards(AuthGuard)
 @Controller()
 export class ScheduleController {
-  constructor(private readonly scheduleService: ScheduleService) {}
+  constructor(@Inject(ScheduleService) private readonly scheduleService: ScheduleService) {}
 
   @Get('hackathons/:id/schedule')
   listByHackathon(

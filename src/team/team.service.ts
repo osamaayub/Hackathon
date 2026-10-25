@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../lib/database/prisma.service.js';
 import { isUniqueViolation, isNotFound } from '../common/prisma-errors.js';
@@ -22,7 +22,7 @@ interface ActingUser {
 
 @Injectable()
 export class TeamService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async findByHackathon(hackathonId: string, page?: string, pageSize?: string) {
     const pagination = parsePagination(page, pageSize);

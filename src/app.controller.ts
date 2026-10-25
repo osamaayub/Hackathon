@@ -1,16 +1,19 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Inject } from '@nestjs/common';
 import { AppService } from './app.service.js';
+import { SkipArcjet } from './common/decorators/skip-arcjet.decorator.js';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(@Inject(AppService) private readonly appService: AppService) {}
 
+  @SkipArcjet()
   @Get()
   getHello(): string {
     return this.appService.getHello();
   }
 
   // Test point for deployments: open /health to confirm the backend is up.
+  @SkipArcjet()
   @Get('health')
   getHealth() {
     return {
