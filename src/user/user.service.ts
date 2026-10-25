@@ -27,6 +27,61 @@ export class UserService {
     return user;
   }
 
+  /**
+   * Everything the profile page shows about the user's hackathons, in one request: the team they are on,
+   * their role, the team's submission and task progress. (The page used to build this from about twenty
+   * separate requests, which is slow on a phone or any slow connection.)
+   */
+  async activity(userId: string) {
+    const memberships = await this.prisma.client.teamMember.findMany({
+      where: { userId },
+      include: {
+        team: {
+          include: {
+            hackathon: true,
+            submission: true,
+            completions: { select: { id: true } },
+            members: { include: { user: { select: { id: true, name: true, email: true } } } },
+          },
+        },
+      },
+    });
+
+    const hackathonIds = memberships.map((m) => m.team.hackathonId);
+    const totals = hackathonIds.length
+      ? await this.prisma.client.task.groupBy({
+          by: ['hackathonId'],
+          where: { hackathonId: { in: hackathonIds } },
+          _count: { _all: true },
+        })
+      : [];
+
+    return memberships
+      .map((m) => ({
+        hackathon: m.team.hackathon,
+        team: {
+          id: m.team.id,
+          name: m.team.name,
+          description: m.team.description,
+          hackathonId: m.team.hackathonId,
+          members: m.team.members.map((tm) => ({
+            id: tm.id,
+            teamId: tm.teamId,
+            userId: tm.userId,
+            role: tm.role,
+            joinedAt: tm.joinedAt,
+            user: tm.user,
+          })),
+        },
+        role: m.role,
+        joinedAt: m.joinedAt,
+        submission: m.team.submission,
+        tasksDone: m.team.completions.length,
+        tasksTotal: totals.find((t) => t.hackathonId === m.team.hackathonId)?._count._all ?? 0,
+      }))
+      .sort((x, y) => y.hackathon.startDate.getTime() - x.hackathon.startDate.getTime());
+  }
+
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     try {
       return await this.prisma.client.user.update({

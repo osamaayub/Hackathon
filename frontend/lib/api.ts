@@ -1,3 +1,5 @@
+import type { HackathonEntry } from './use-profile-activity';
+import type { LeaderboardRow, ProjectsData } from './use-community-data';
 import type {
   Hackathon,
   HackathonDetail,
@@ -110,6 +112,12 @@ export const api = {
     request<{ success: boolean }>(`/teams/${teamId}/leave`, { method: 'POST' }),
 
   me: () => request<User>('/users/me'),
+
+  myActivity: () => request<HackathonEntry[]>('/users/me/activity'),
+
+  leaderboard: () => request<LeaderboardRow[]>('/leaderboard'),
+
+  projects: () => request<ProjectsData>('/projects'),
 
   updateProfile: (data: { name?: string }) =>
     request<User>('/users/me', { method: 'PATCH', body: JSON.stringify(data) }),

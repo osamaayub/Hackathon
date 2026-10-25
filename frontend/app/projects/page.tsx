@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ExternalLink, RefreshCw, Rocket, Search } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { formatDate } from '@/lib/hackathon';
-import { useCommunityData } from '@/lib/use-community-data';
+import { useProjects } from '@/lib/use-community-data';
 import { AuthGate } from '@/components/AuthGate';
 import { PageHero } from '@/components/PageHero';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ function hostOf(link: string) {
 function Gallery() {
   const { user } = useAuth();
   const [retry, setRetry] = useState(0);
-  const { data, error } = useCommunityData(user?.id, retry);
+  const { data, error } = useProjects(user?.id, retry);
   const [query, setQuery] = useState('');
   const [hackathonId, setHackathonId] = useState('all');
 

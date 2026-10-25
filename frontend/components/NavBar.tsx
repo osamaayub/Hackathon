@@ -89,7 +89,7 @@ export function NavBar() {
               }`}
             >
               <Avatar className="size-7">
-                <AvatarFallback className="bg-linear-to-br from-primary via-chart-4 to-chart-2 text-[11px] font-bold text-white">
+                <AvatarFallback className="bg-linear-to-br from-primary via-chart-4 to-chart-2 text-[0.6875rem] font-bold text-white">
                   {initials(user.name, user.email)}
                 </AvatarFallback>
               </Avatar>

@@ -1,8 +1,9 @@
 import { Controller, Get, Post, Body, Query, Req, Res, HttpException, HttpStatus, Inject } from '@nestjs/common';
-import { createHash, timingSafeEqual } from 'node:crypto';
 import type { Request, Response } from 'express';
 import { APIError } from 'better-auth';
 import { AuthService } from '../lib/auth/auth.service.js';
+import { sameSecret } from '../common/same-secret.js';
+import { primaryFrontendUrl } from '../common/allowed-origins.js';
 import { PrismaService } from '../lib/database/prisma.service.js';
 import { SignUpDto } from './dto/sign-up.dto.js';
 import { AdminSignUpDto } from './dto/admin-sign-up.dto.js';
@@ -12,13 +13,6 @@ import { UnlinkAccountDto } from './dto/unlink-account.dto.js';
 import { ResendVerificationDto } from './dto/resend-verification.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
-
-/** Compares two secrets without leaking, through timing, how much of them matched. */
-function sameSecret(a: string, b: string): boolean {
-  const ha = createHash('sha256').update(a).digest();
-  const hb = createHash('sha256').update(b).digest();
-  return timingSafeEqual(ha, hb);
-}
 
 function toHttpException(error: unknown, fallbackMessage: string): HttpException {
   if (error instanceof APIError) {
@@ -217,7 +211,7 @@ export class AuthController {
   @Post('forgot-password')
   async forgotPassword(@Body() body: ForgotPasswordDto) {
     try {
-      const frontend = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/+$/, '');
+      const frontend = primaryFrontendUrl();
       await this.authService.instance.api.requestPasswordReset({
         body: { email: body.email, redirectTo: `${frontend}/reset-password` },
       });

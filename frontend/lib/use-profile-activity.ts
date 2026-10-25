@@ -48,58 +48,21 @@ export function statsOf(entries: HackathonEntry[], userId: string): ActivityStat
   };
 }
 
-/**
- * Collects everything the profile shows about the user's hackathons: the team they are on,
- * their role, the team's submission and task progress. Best effort: a failing request for one
- * hackathon just leaves it out instead of breaking the page.
- */
+/** Loads everything the profile shows about the user's hackathons with a single request. */
 export function useProfileActivity(userId: string | undefined) {
   const [entries, setEntries] = useState<HackathonEntry[] | null>(null);
 
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
-
-    (async () => {
-      try {
-        const hackathons = await api.listHackathons();
-        const details = await Promise.all(hackathons.map((h) => api.getHackathon(h.id).catch(() => null)));
-
-        const found = await Promise.all(
-          details.map(async (d): Promise<HackathonEntry | null> => {
-            const team = d?.teams.find((t) => t.members.some((m) => m.userId === userId));
-            const me = team?.members.find((m) => m.userId === userId);
-            if (!d || !team || !me) return null;
-
-            const [subs, tasks] = await Promise.all([
-              api.listSubmissions(d.id).catch(() => []),
-              api.listTasks(d.id).catch(() => []),
-            ]);
-
-            return {
-              hackathon: d,
-              team,
-              role: me.role,
-              joinedAt: me.joinedAt,
-              submission: subs.find((s) => s.teamId === team.id)?.submission ?? null,
-              tasksDone: tasks.filter((t) => t.completedByMyTeam).length,
-              tasksTotal: tasks.length,
-            };
-          }),
-        );
-
-        if (!cancelled) {
-          setEntries(
-            found
-              .filter((e): e is HackathonEntry => e !== null)
-              .sort((a, b) => new Date(b.hackathon.startDate).getTime() - new Date(a.hackathon.startDate).getTime()),
-          );
-        }
-      } catch {
+    api
+      .myActivity()
+      .then((items) => {
+        if (!cancelled) setEntries(items);
+      })
+      .catch(() => {
         if (!cancelled) setEntries([]);
-      }
-    })();
-
+      });
     return () => {
       cancelled = true;
     };

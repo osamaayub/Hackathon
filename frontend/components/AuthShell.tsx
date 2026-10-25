@@ -17,7 +17,7 @@ export function AuthShell({ children, variant = 'participant' }: { children: Rea
   const admin = variant === 'admin';
   const list = admin ? adminPerks : perks;
   return (
-    <div className="grid min-h-[calc(100vh-61px)] lg:grid-cols-2">
+    <div className="grid min-h-[calc(100svh-4.25rem)] lg:grid-cols-2">
       <aside className="dark relative hidden overflow-hidden bg-background text-foreground lg:block">
         <div className="bg-grid absolute inset-0" />
         <div className="animate-float absolute -top-20 -left-20 size-96 rounded-full bg-primary/30 blur-3xl" />

@@ -92,7 +92,7 @@ function Radar({ values }: { values: { technical: number; business: number; crea
       ))}
       <polygon points={poly} className="fill-primary/25 stroke-primary" strokeWidth="2" strokeLinejoin="round" />
       <circle cx={c} cy={c} r="3" className="fill-primary" />
-      <g className="fill-muted-foreground text-[10px]" textAnchor="middle">
+      <g className="fill-muted-foreground text-[0.625rem]" textAnchor="middle">
         <text x={c} y="22">Technical</text>
         <text x="196" y={c + 4}>Business</text>
         <text x={c} y="210">Creativity</text>
@@ -120,11 +120,11 @@ function EntryCard({ entry }: { entry: HackathonEntry }) {
   const pct = tasksTotal ? Math.round((tasksDone / tasksTotal) * 100) : 0;
   return (
     <Card className="gap-0 rounded-xl py-0 shadow-sm transition hover:shadow-md">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b p-5">
+      <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-lg font-bold tracking-tight">{h.title}</h3>
-            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase ${phaseStyle[phase]}`}>{phase}</span>
+            <span className={`rounded-full px-2.5 py-0.5 text-[0.6875rem] font-bold uppercase ${phaseStyle[phase]}`}>{phase}</span>
           </div>
           <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
@@ -139,20 +139,20 @@ function EntryCard({ entry }: { entry: HackathonEntry }) {
             )}
           </p>
         </div>
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
           <Link href={`/hackathons/${h.id}`}>
             Open <ArrowRight />
           </Link>
         </Button>
       </div>
 
-      <div className="grid gap-5 p-5 sm:grid-cols-2">
+      <div className="grid gap-5 p-4 sm:grid-cols-2 sm:p-5">
         <div>
           <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Team</p>
           <div className="mt-2 flex items-center gap-2">
             <span className="font-semibold">{team.name}</span>
             {role === 'LEADER' && (
-              <Badge variant="secondary" className="gap-1 text-[10px] uppercase">
+              <Badge variant="secondary" className="gap-1 text-[0.625rem] uppercase">
                 <Crown className="size-3 text-chart-2" /> Leader
               </Badge>
             )}
@@ -160,11 +160,11 @@ function EntryCard({ entry }: { entry: HackathonEntry }) {
           <div className="mt-3 flex -space-x-2">
             {team.members.slice(0, 6).map((m) => (
               <Avatar key={m.id} className="size-7 border-2 border-card" title={m.user.name || m.user.email}>
-                <AvatarFallback className="bg-primary/15 text-[10px] font-bold text-primary">{initials(m.user.name, m.user.email)}</AvatarFallback>
+                <AvatarFallback className="bg-primary/15 text-[0.625rem] font-bold text-primary">{initials(m.user.name, m.user.email)}</AvatarFallback>
               </Avatar>
             ))}
             {team.members.length > 6 && (
-              <span className="grid size-7 place-items-center rounded-full border-2 border-card bg-muted text-[10px] font-semibold text-muted-foreground">
+              <span className="grid size-7 place-items-center rounded-full border-2 border-card bg-muted text-[0.625rem] font-semibold text-muted-foreground">
                 +{team.members.length - 6}
               </span>
             )}
@@ -536,7 +536,7 @@ export default function ProfilePage() {
                   <Icon className="size-9" />
                 </div>
                 <p className={`text-sm font-semibold ${earned ? '' : 'text-muted-foreground'}`}>{label}</p>
-                <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${earned ? 'bg-amber-400/20 text-amber-600 dark:text-amber-400' : 'bg-muted text-muted-foreground'}`}>
+                <span className={`rounded px-1.5 py-0.5 text-[0.625rem] font-bold uppercase ${earned ? 'bg-amber-400/20 text-amber-600 dark:text-amber-400' : 'bg-muted text-muted-foreground'}`}>
                   {earned ? tier : hint}
                 </span>
               </div>
