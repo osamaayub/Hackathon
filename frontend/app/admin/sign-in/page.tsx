@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { Loader2, ShieldCheck } from 'lucide-react';
+import { Loader2, MailCheck, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,15 @@ export default function AdminSignInPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [registered, setRegistered] = useState(false);
+
+  // Arriving from organizer sign up: show a message and prefill the email.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setRegistered(Boolean(params.get('registered')));
+    const prefill = params.get('email');
+    if (prefill) setEmail(prefill);
+  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -44,6 +53,15 @@ export default function AdminSignInPage() {
       </span>
       <h1 className="mt-5 text-3xl font-semibold tracking-tight">Organizer sign in</h1>
       <p className="mt-1.5 text-sm text-muted-foreground">For people who create and manage hackathons.</p>
+
+      {registered && (
+        <div role="status" className="mt-6 flex gap-3 rounded-xl border border-chart-3/30 bg-chart-3/10 p-4 text-sm">
+          <MailCheck className="mt-0.5 size-5 shrink-0 text-chart-3" />
+          <p>
+            <span className="font-semibold">Organizer account created.</span> We sent a verification link to your email. Open it, then sign in below.
+          </p>
+        </div>
+      )}
 
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
         <div className="space-y-1.5">
@@ -78,8 +96,14 @@ export default function AdminSignInPage() {
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
+        Need an organizer account?{' '}
+        <Link href="/admin/sign-up" className="font-medium text-primary hover:underline">
+          Sign up with an invite code
+        </Link>
+      </p>
+      <p className="mt-2 text-center text-xs text-muted-foreground">
         Taking part in a hackathon?{' '}
-        <Link href="/sign-in" className="font-medium text-primary hover:underline">
+        <Link href="/sign-in" className="font-medium text-foreground hover:underline">
           Participant sign in
         </Link>
       </p>

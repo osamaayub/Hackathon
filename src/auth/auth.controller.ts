@@ -1,15 +1,24 @@
 import { Controller, Get, Post, Body, Query, Req, Res, HttpException, HttpStatus, Inject } from '@nestjs/common';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import type { Request, Response } from 'express';
 import { APIError } from 'better-auth';
 import { AuthService } from '../lib/auth/auth.service.js';
 import { PrismaService } from '../lib/database/prisma.service.js';
 import { SignUpDto } from './dto/sign-up.dto.js';
+import { AdminSignUpDto } from './dto/admin-sign-up.dto.js';
 import { SignInDto } from './dto/sign-in.dto.js';
 import { RevokeSessionDto } from './dto/revoke-session.dto.js';
 import { UnlinkAccountDto } from './dto/unlink-account.dto.js';
 import { ResendVerificationDto } from './dto/resend-verification.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
+
+/** Compares two secrets without leaking, through timing, how much of them matched. */
+function sameSecret(a: string, b: string): boolean {
+  const ha = createHash('sha256').update(a).digest();
+  const hb = createHash('sha256').update(b).digest();
+  return timingSafeEqual(ha, hb);
+}
 
 function toHttpException(error: unknown, fallbackMessage: string): HttpException {
   if (error instanceof APIError) {
@@ -43,6 +52,38 @@ export class AuthController {
 
   @Post('sign-up')
   async signUp(@Body() body: SignUpDto, @Res({ passthrough: true }) res: Response) {
+    return this.createAccount(body, res);
+  }
+
+  // Organizer accounts can only be created with the invite code in ORGANIZER_INVITE_CODE. Without that gate
+  // anyone could make themselves an organizer, so the code is checked before anything else happens (which
+  // also means a wrong code reveals nothing about which emails are registered).
+  @Post('admin/sign-up')
+  async adminSignUp(@Body() body: AdminSignUpDto, @Res({ passthrough: true }) res: Response) {
+    const expected = process.env.ORGANIZER_INVITE_CODE?.trim();
+    if (!expected) {
+      throw new HttpException(
+        { message: 'Organizer sign up is not enabled on this site.', code: 'ORGANIZER_SIGNUP_DISABLED' },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    if (!sameSecret(body.inviteCode.trim(), expected)) {
+      throw new HttpException(
+        { message: 'That invite code is not valid.', code: 'INVALID_INVITE_CODE' },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const { inviteCode: _inviteCode, ...account } = body;
+    const result = await this.createAccount(account, res);
+    await this.prisma.client.user.update({
+      where: { email: body.email.trim().toLowerCase() },
+      data: { role: 'ADMIN' },
+    });
+    return result;
+  }
+
+  private async createAccount(body: SignUpDto, res: Response) {
     // With email verification required, Better Auth answers "success" for an email that already has
     // an account, without changing anything. That leaves people believing a new password was saved,
     // so say plainly that the account exists. (Trade off: this reveals which emails are registered.)

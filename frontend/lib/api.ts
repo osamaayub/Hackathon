@@ -81,6 +81,9 @@ export const api = {
   signUp: (data: { email: string; password: string; name?: string }) =>
     request('/auth/sign-up', { method: 'POST', body: JSON.stringify(data) }),
 
+  adminSignUp: (data: { email: string; password: string; name?: string; inviteCode: string }) =>
+    request('/auth/admin/sign-up', { method: 'POST', body: JSON.stringify(data) }),
+
   signIn: (data: { email: string; password: string }) =>
     request('/auth/sign-in', { method: 'POST', body: JSON.stringify(data) }),
 
