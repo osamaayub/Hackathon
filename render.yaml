@@ -1,0 +1,49 @@
+# Render Blueprint for the NestJS backend.
+# In Render: New > Blueprint > pick this repository (and the branch that contains this file).
+# Render asks you for every variable marked `sync: false`, so secrets never live in git.
+services:
+  - type: web
+    name: hackathon-backend
+    runtime: node
+    plan: free
+    region: oregon
+    autoDeploy: true
+    healthCheckPath: /
+    # This project's lockfile is yarn.lock (npm ci fails on a peer dependency conflict).
+    # devDependencies are needed to compile (nest, prisma), so install them even though NODE_ENV=production.
+    buildCommand: yarn install --frozen-lockfile --production=false && yarn build
+    startCommand: yarn start:prod
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      # Render puts a proxy in front of the service; this makes Arcjet see the real visitor IP.
+      - key: TRUST_PROXY
+        value: "1"
+      - key: ARCJET_ENV
+        value: production
+      - key: ARCJET_MODE
+        value: LIVE
+
+      # Where the frontend lives. With the Vercel proxy, the backend's public base is the frontend URL + /backend.
+      - key: FRONTEND_URL
+        value: https://frontend-sable-nine-20.vercel.app
+      - key: APP_BASE_URL
+        value: https://frontend-sable-nine-20.vercel.app/backend
+
+      # Contact form inbox. Resend's free test sender only delivers to the Resend account owner's address.
+      - key: CONTACT_TO_EMAIL
+        value: ayubosama416@gmail.com
+
+      # Render generates a strong random secret for you.
+      - key: BETTER_AUTH_SECRET
+        generateValue: true
+
+      # Secrets: Render prompts for these when you create the Blueprint. Copy them from your local .env.
+      - key: DATABASE_URL
+        sync: false
+      - key: ARCJET_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false

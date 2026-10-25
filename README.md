@@ -232,7 +232,16 @@ Verification emails are sent with Resend through `MailService`. With no `RESEND_
 
 The project has two deployable parts.
 
-**Backend (NestJS)** on any Node host (Railway, Render, Fly, ...):
+**Backend on Render (recommended, free):** the repository includes a Blueprint, [`render.yaml`](render.yaml).
+
+1. In Render choose **New > Blueprint**, pick this repository and the branch that contains `render.yaml`.
+2. Render shows the service `hackathon-backend` and asks for the values marked secret: `DATABASE_URL`, `ARCJET_KEY` and `RESEND_API_KEY`. Copy them from your local `.env`. The auth secret is generated for you.
+3. Apply. When the deploy finishes, open the service URL: `GET /` should return 200.
+4. In Vercel set `BACKEND_URL` to that service URL (no trailing slash), then redeploy the frontend.
+
+The free plan sleeps after about 15 minutes without traffic, so the first request after a pause is slow.
+
+**Backend (NestJS)** on any other Node host (Railway, Fly, ...):
 
 1. Create a service from this repository, root directory `/`.
 2. Build command `npm run build` (generates the Prisma client, then compiles). Start command `npm run start:prod`.
