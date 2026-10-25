@@ -268,7 +268,7 @@ With `BACKEND_URL` set, the browser calls `/backend/...` on the Vercel site and 
 
 ## Performance: caching and scheduled jobs
 
-**Cache.** `src/lib/cache` is a small cache with a time to live. Set `REDIS_URL` (any Redis, for example a free Upstash database) to use Redis, or leave it empty to cache in each server's memory. A Redis error never breaks a request: that call is served from memory instead. Open `/health` to see which one is active (`"cache": "redis"` or `"memory"`).
+**Cache.** `src/lib/cache` is a small cache with a time to live. Set `REDIS_URL` (or `KV_URL`, which Vercel's Redis integration adds for you; any Redis works, for example a free Upstash database) to use Redis, or leave it empty to cache in each server's memory. A Redis error never breaks a request: that call is served from memory instead. Open `/health` to see which one is active (`"cache": "redis"` or `"memory"`).
 
 It currently caches the **leaderboard** (`GET /leaderboard`, 5 minutes) and **projects** (`GET /projects`, 2 minutes), which the website used to assemble from about twenty requests. A new submission clears both immediately.
 

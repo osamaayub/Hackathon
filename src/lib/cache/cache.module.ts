@@ -9,7 +9,8 @@ import { CacheService, REDIS_CLIENT } from './cache.service.js';
       provide: REDIS_CLIENT,
       useFactory: (): Redis | null => {
         const logger = new Logger('Cache');
-        const url = process.env.REDIS_URL?.trim();
+        // Vercel's Redis integration names its connection string KV_URL, so accept that as well.
+        const url = (process.env.REDIS_URL || process.env.KV_URL)?.trim();
         if (!url) {
           logger.log('REDIS_URL is not set; caching in process memory.');
           return null;
