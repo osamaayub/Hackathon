@@ -150,13 +150,21 @@ yarn prisma:migrate:dev    # create/apply migrations against DATABASE_URL
 
 ### 4. Run the app
 
+From the repository root, start the frontend with:
+
+```bash
+yarn dev
+```
+
+In another terminal, start the API with:
+
 ```bash
 yarn start:dev     # watch mode
 yarn start         # single run
 yarn start:prod    # run compiled dist/main.js (after `yarn build`)
 ```
 
-The API listens on `http://localhost:8080` by default (or `PORT` from `.env`).
+The frontend listens on `http://localhost:3000`. The API listens on `http://localhost:8080` by default (or `PORT` from `.env`).
 
 ## API
 

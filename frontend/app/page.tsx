@@ -9,7 +9,6 @@ import {
   Check,
   Globe,
   ListChecks,
-  MapPin,
   RefreshCw,
   Rocket,
   Search,
@@ -40,6 +39,13 @@ const features = [
   { icon: ListChecks, title: 'Task tracking', text: 'Organizers publish milestones, teams tick them off, progress is always visible.' },
   { icon: Rocket, title: 'Project submissions', text: 'Submit and update your project link until the deadline. A public gallery shows every entry.' },
   { icon: Shield, title: 'Secure accounts', text: 'Verified email sign in, session management and role based admin controls.' },
+];
+
+const featuredTracks = [
+  { icon: Globe, title: 'AI & ML', text: 'Ship models, copilots and workflows that solve real user problems.', tag: 'Most popular' },
+  { icon: Rocket, title: 'Developer tools', text: 'Build internal tooling, automation and products that teams actually use.', tag: 'Fast growth' },
+  { icon: Shield, title: 'Cybersecurity', text: 'Prototype security tooling, privacy layers and defensive systems.', tag: 'High demand' },
+  { icon: Calendar, title: 'Climate & sustainability', text: 'Tackle emissions, energy and resource problems with real world impact.', tag: 'New this season' },
 ];
 
 const previewTasks = [
@@ -113,10 +119,7 @@ export default function HomePage() {
   useEffect(() => {
     // Wait for the auth context to resolve; re-run on sign in/out so the list retries.
     if (authLoading) return;
-    if (!user) {
-      setHackathons(null);
-      return;
-    }
+    if (!user) return;
     let cancelled = false;
     setError(null);
     api
@@ -277,6 +280,37 @@ export default function HomePage() {
                 </span>
                 <h3 className="mt-5 text-lg font-bold">{title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t bg-background">
+        <div className="mx-auto max-w-6xl px-6 py-24">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold tracking-wide text-primary uppercase">Featured tracks</p>
+              <h2 className="mt-2 text-4xl font-extrabold tracking-tight">Built for the ideas the community is chasing</h2>
+            </div>
+            <Link href="/hackathons" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+              View all events <ArrowRight className="size-4" />
+            </Link>
+          </div>
+
+          <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {featuredTracks.map(({ icon: Icon, title, text, tag }) => (
+              <div key={title} className="rounded-2xl border bg-card p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="size-5" />
+                  </span>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    {tag}
+                  </span>
+                </div>
+                <h3 className="mt-4 text-lg font-bold">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
               </div>
             ))}
           </div>

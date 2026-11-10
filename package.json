@@ -10,6 +10,7 @@
     "node": ">=22"
   },
   "scripts": {
+    "dev": "yarn --cwd frontend dev",
     "build": "prisma generate && nest build",
     "deploy": "nest deploy",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
